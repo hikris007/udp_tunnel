@@ -18,6 +18,8 @@ typedef std::function<void(const std::shared_ptr<Pair> pair)> onCloseCallback;
 typedef std::function<SizeT(const std::shared_ptr<Pair> pair,const Byte* payload, SizeT len)> sendHandler;
 typedef std::function<void(const std::shared_ptr<Pair> pair,const Byte* payload)> onRecvCallback;
 
+#define INVALID_PAIR_ID 0;
+
 class Pair : public std::enable_shared_from_this<Pair>{
 public:
 
