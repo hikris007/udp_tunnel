@@ -9,7 +9,7 @@
 
 class TunnelFactory {
 public:
-    static TunnelPtr createTunnel(){
+    static Tunnel* createTunnel(){
         return nullptr;
     }
 };

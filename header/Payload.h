@@ -6,10 +6,19 @@
 #define TUNNEL_PAYLOAD_H
 
 #include <memory>
+#include <mutex>
 #include "Byte.h"
+#include "PayloadWrapper.h"
 
-class Payload {
+class Payload : public PayloadWrapper {
 public:
+    /**
+     * 不能拷贝是因为 Payload 的 data 部分是自己创建&&销毁
+     * 如果使用拷贝构造函数 则会造成多个实例共享一个 data 会造成多次释放
+     */
+    Payload(const Payload&) = delete;
+    Payload &operator=(const Payload&) = delete;
+
     ~Payload();
 
     // 根据容量大小的构造函数
@@ -41,20 +50,14 @@ public:
     // length 拷贝的个数
     SizeT copyFrom(const Byte *buffer, SizeT begin, SizeT length);
 
-    // 获取数据的指针
-    const Byte *data();
-
-    // 获取当前消息的长度
-    SizeT length() const;
-
     // 获取当前容器的容量
     SizeT capacity() const;
 
 protected:
 private:
     SizeT _capacity = 0;
-    SizeT _length = 0;
-    Byte *_data = nullptr;
+    Byte* _data = nullptr;
+    std::mutex _locker;
 };
 
 typedef std::shared_ptr<Payload> PayloadPtr;

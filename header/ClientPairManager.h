@@ -11,6 +11,8 @@
 
 #include "Pair.h"
 #include "Tunnel.h"
+#include "TunnelFactory.h"
+#include "./Config.h"
 
 /**
  * Send: Client -> TunnelClient -> TunnelServer -> Server
@@ -25,6 +27,9 @@ public:
     // Pair 调用这个函数发送数据
     SizeT onSend(PairID pairID, const Byte* payload, SizeT len);
 
+    // 创建一个隧道
+    Int createTunnel();
+
     // 创建一个 Pair
     Int createPair();
 protected:
@@ -32,6 +37,7 @@ protected:
 private:
     static const int MAX_PAIRS_PER_TUNNEL = 8;
 
+    ClientConfig* clientConfig = nullptr; // 配置项
     std::mutex _locker; // 锁
     std::unordered_map<TunnelID, TunnelPtr> tunnels; // 传输层的列表
     std::unordered_map<TunnelID ,int> tunnelPairCounter; // Key 是传输层的ID 值是空闲数量

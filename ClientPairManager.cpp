@@ -4,6 +4,14 @@
 
 #include "header/ClientPairManager.h"
 
+Int ClientPairManager::createTunnel() {
+    // 创建隧道
+    Tunnel *tunnel = TunnelFactory::createTunnel();
+
+    // 设置上下文
+    return 0;
+}
+
 Int ClientPairManager::createPair() {
     if(this->availableTunnelIDs.empty()){
         // TODO: 创建Tunnel
