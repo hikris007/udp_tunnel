@@ -13,13 +13,14 @@
 #include "Tunnel.h"
 #include "TunnelFactory.h"
 #include "./Config.h"
+#include "Context.h"
 
 /**
  * Send: Client -> TunnelClient -> TunnelServer -> Server
  * Recv: Client <- TunnelClient <- TunnelServer <- Server
  */
 
-class ClientPairManager {
+class ClientPairManager : public std::enable_shared_from_this<ClientPairManager>{
 public:
     // 从隧道出来的整个 Pair
     void onRecv(const Byte* payload, SizeT len);
@@ -35,8 +36,6 @@ public:
 protected:
 
 private:
-    static const int MAX_PAIRS_PER_TUNNEL = 8;
-
     ClientConfig* clientConfig = nullptr; // 配置项
     std::mutex _locker; // 锁
     std::unordered_map<TunnelID, TunnelPtr> tunnels; // 传输层的列表

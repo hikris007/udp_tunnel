@@ -4,6 +4,10 @@
 
 #include "header/Pair.h"
 
+Pair::Pair(PairID pairID) {
+    this->_pairID = pairID;
+}
+
 void *Pair::context() {
     return this->_ctx;
 }
@@ -64,17 +68,17 @@ SizeT Pair::send(const Byte *payload, SizeT len) {
 }
 
 HANDLER_ID Pair::addOnCloseHandler(onCloseCallback callback) {
-    return this->onCloseCallbacks.add(callback);
+    return this->_onCloseCallbacks.add(callback);
 }
 
 void Pair::removeOnCloseHandler(HANDLER_ID handlerID) {
-    this->onCloseCallbacks.remove(handlerID);
+    this->_onCloseCallbacks.remove(handlerID);
 }
 
 Int Pair::close() {
     std::lock_guard<std::mutex> locker(this->_locker);
 
-    this->onCloseCallbacks.trigger(shared_from_this());
+    this->_onCloseCallbacks.trigger(shared_from_this());
 
     return 0;
 }

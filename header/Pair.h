@@ -18,10 +18,11 @@ typedef std::function<void(const std::shared_ptr<Pair> pair)> onCloseCallback;
 typedef std::function<SizeT(const std::shared_ptr<Pair> pair,const Byte* payload, SizeT len)> sendHandler;
 typedef std::function<void(const std::shared_ptr<Pair> pair,const Byte* payload)> onRecvCallback;
 
-#define INVALID_PAIR_ID 0;
+static const PairID INVALID_PAIR_ID = 0;
 
 class Pair : public std::enable_shared_from_this<Pair>{
 public:
+    Pair(PairID pairID);
 
     void *context();// 获取上下文指针
 
@@ -58,7 +59,7 @@ private:
     void *_ctx = nullptr;
     std::shared_ptr<void> _ctxPtr;
     std::mutex _locker;
-    CallBackManager<const std::shared_ptr<Pair>> onCloseCallbacks;
+    CallBackManager<const std::shared_ptr<Pair>> _onCloseCallbacks;
 };
 
 typedef std::shared_ptr<Pair> PairPtr;

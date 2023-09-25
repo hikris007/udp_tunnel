@@ -8,49 +8,71 @@ Int ClientPairManager::createTunnel() {
     // 创建隧道
     Tunnel *tunnel = TunnelFactory::createTunnel();
 
+    // 配置上下文
+    ClientTunnelContextPtr clientTunnelContext = std::make_shared<ClientTunnelContext>();
+
+    // 配置 Pair ID 池
+    SizeT begin = INVALID_PAIR_ID+1;
+    SizeT end = begin + this->clientConfig->carryingCapacity;
+    for(SizeT i = begin; i < end; i++){
+        clientTunnelContext->put(i);
+    }
+
     // 设置上下文
+    tunnel->setContextPtr(clientTunnelContext);
+
+    // 包装智能指针
+    TunnelPtr tunnelPtr(tunnel);
+
+    // 放入列表
+    TunnelID tunnelID = tunnelPtr->id();
+    this->tunnels.insert({ tunnelID, tunnelPtr });
+
+    // 添加到计数列表
+    auto insertResult = this->tunnelPairCounter.insert({tunnelID, 0});
+
+    // 如果有剩余空间就添加到可用的隧道列表
+    std::unordered_map<TunnelID, int>::iterator targetCounter = insertResult.first;
+    if(targetCounter->second < this->clientConfig->carryingCapacity){
+        this->availableTunnelIDs.push(tunnelID);
+    }
+
     return 0;
 }
 
 Int ClientPairManager::createPair() {
+    std::lock_guard<std::mutex> lockGuard(this->_locker);
+
+    // 如果没有可用的隧道就先创建
     if(this->availableTunnelIDs.empty()){
-        // TODO: 创建Tunnel
-        TunnelPtr tunnel;
-        TunnelID tunnelID = tunnel->id();
-
-        // 添加到 Tunnels 列表
-        this->tunnels.insert(std::pair<TunnelID, TunnelPtr>(tunnelID, tunnel));
-
-        // 添加到计数列表
-        // 这里的值为1是因为创建这个隧道就是为了这个Pair
-        auto insertResult = this->tunnelPairCounter.insert(std::pair<TunnelID, int>(tunnelID, 1));
-        if(!insertResult.second){
-            // TODO:添加失败
-        }
-        std::unordered_map<TunnelID ,int>::iterator targetCounter = insertResult.first;
-
-        // 如果有剩余空间就添加到可用的隧道列表
-        if(targetCounter->second < MAX_PAIRS_PER_TUNNEL){
-            this->availableTunnelIDs.push(tunnelID);
-        }
-    }else{
-        // 获取第一个空闲的 TunnelID
-        TunnelID tunnelID = this->availableTunnelIDs.front();
-
-        // 在计数器中查找
-        std::unordered_map<TunnelID ,int>::iterator targetCounter = this->tunnelPairCounter.find(tunnelID);
-        if(targetCounter == this->tunnelPairCounter.end()){
-            // TODO: 如果计数器不存在的逻辑
-            return 1;
-        }
-
-        // 因为要使用这个底层传输 所以计数+1
-        targetCounter->second++;
-
-        // 如果隧道的空位满了就从可用列表中移除
-        if(targetCounter->second >= MAX_PAIRS_PER_TUNNEL){
-            this->availableTunnelIDs.pop();
-        }
+        this->createTunnel();
     }
+
+    // 获取第一个空闲的 TunnelID
+    TunnelID tunnelID = this->availableTunnelIDs.front();
+    auto iterator = this->tunnels.find(tunnelID);
+    TunnelPtr tunnel = iterator->second;
+    ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+
+    // 创建 Pair
+    PairID pairID = clientTunnelContext->get();
+
+    ClientPairContextPtr clientPairContext = std::make_shared<ClientPairContext>();
+    clientPairContext->_tunnel = tunnel;
+    clientPairContext->_clientPairManagerPtr = shared_from_this();
+
+    PairPtr pair = std::make_shared<Pair>(pairID);
+
+    pair->setContextPtr(clientPairContext);
+
+    // 在计数器中查找 & 因为要使用这个底层传输 所以计数+1
+    std::unordered_map<TunnelID ,int>::iterator targetCounter = this->tunnelPairCounter.find(tunnelID);
+    targetCounter->second++;
+
+    // 如果隧道的空位满了就从可用列表中移除
+    if(targetCounter->second >= this->clientConfig->carryingCapacity){
+        this->availableTunnelIDs.pop();
+    }
+
     return 0;
 }
