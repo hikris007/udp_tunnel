@@ -44,7 +44,7 @@ public:
 
     // 接收的回调
     // 传入 当前隧道和发送完成的消息
-    onRecvCallback onRecv = nullptr;
+    onRecvCallback onReceive = nullptr;
 
     // 关闭
     Int close();

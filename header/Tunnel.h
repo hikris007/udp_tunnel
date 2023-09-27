@@ -39,6 +39,8 @@ public:
         UNCERTAIN
     };
 
+    virtual ~Tunnel();
+
 
     void* context();// 获取上下文指针
     template<class T> T* getContext(); // 获取上下文指针

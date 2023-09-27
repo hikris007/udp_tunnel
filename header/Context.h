@@ -6,6 +6,8 @@
 #define UDP_TUNNEL_CONTEXT_H
 
 #include <memory>
+#include <unordered_map>
+#include <unordered_set>
 #include "ClientPairManager.h"
 
 class ClientPairContext {
@@ -24,32 +26,54 @@ class ServerPairContext {
 class ClientTunnelContext {
 
 public:
+    ClientTunnelContext(SizeT carryingCapacity){
+        // 初始化 PairID 池
+        this->initAvailablePairIDs(carryingCapacity);
+    }
+
     PairID get(){
         std::lock_guard<std::mutex> locker(this->_locker);
         if(this->_availablePairIDs.empty())
             return INVALID_PAIR_ID;
 
-        PairID pairID = this->_availablePairIDs.front();
-        this->_availablePairIDs.pop();
+        auto iterator = this->_availablePairIDs.begin();
+        PairID pairID = *iterator;
+        this->_availablePairIDs.erase(iterator);
 
         return pairID;
     }
 
     void put(PairID pairID){
         std::lock_guard<std::mutex> locker(this->_locker);
-        this->_availablePairIDs.push(pairID);
+        this->_availablePairIDs.insert(pairID);
     }
 
-    void addPair(std::weak_ptr<Pair> pair){
+    void addPair(PairPtr pairPtr){
+        std::lock_guard<std::mutex> locker(this->_locker);
+        this->_pairs.insert({ pairPtr->id(), pairPtr });
     }
 
-    void removePair(std::weak_ptr<Pair> pairPtr){
+    void removePair(PairPtr pairPtr){
+        std::lock_guard<std::mutex> locker(this->_locker);
+        auto iterator = this->_pairs.find(pairPtr->id());
+        if(iterator == this->_pairs.end())
+            return;
 
+        this->_pairs.erase(iterator);
     }
 
 private:
-    std::list<std::weak_ptr<Pair>> _pairs; // 映射的集合
-    std::queue<PairID> _availablePairIDs; // 可用的映射 ID
+    void initAvailablePairIDs(SizeT carryingCapacity){
+        SizeT begin = INVALID_PAIR_ID+1;
+
+        for(SizeT i = begin; this->_availablePairIDs.size() < carryingCapacity; i++){
+            this->put(i);
+        }
+    }
+
+private:
+    std::unordered_map<PairID, std::weak_ptr<Pair>> _pairs; // 映射的集合
+    std::unordered_set<PairID> _availablePairIDs; // 可用的映射 ID
     std::mutex _locker;
 };
 
