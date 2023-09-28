@@ -15,18 +15,35 @@ ClientPairManager::ClientPairManager() {
 }
 
 SizeT ClientPairManager::onSend(PairPtr pair, const Byte *payload, SizeT len) {
+    // 获取 Pair 上下文
+    ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+
+    // 从上下文中获取所属的隧道
+    std::weak_ptr<Tunnel> tunnel = clientPairContext->_tunnel;
+    if(tunnel.expired()){
+        // TODO: 当隧道不存在
+        return -1;
+    }
+
+    TunnelPtr tunnelPtr = tunnel.lock();
+
+    // TODO: 写入数据
+    tunnelPtr->send(payload, len);
+}
+
+void ClientPairManager::onPairClose(PairPtr pair) {
     // 获取上下文
     ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
     // 从上下文中获取所属的隧道
     std::weak_ptr<Tunnel> tunnel = clientPairContext->_tunnel;
+    if(tunnel.expired())
+        return;
 
-    // TODO: 写入数据
+    TunnelPtr tunnelPtr = tunnel.lock();
+    ClientTunnelContextPtr clientTunnelContext = tunnelPtr->getContextPtr<ClientTunnelContext>();
 
-}
-
-void ClientPairManager::onPairClose() {
-
+    clientTunnelContext->removePair(pair);
 }
 
 Int ClientPairManager::createTunnel() {
@@ -53,7 +70,7 @@ Int ClientPairManager::createTunnel() {
     return 0;
 }
 
-Int ClientPairManager::createPair() {
+Int ClientPairManager::createPair(PairPtr& outputPair) {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     // 如果没有可用的隧道就先创建
@@ -93,6 +110,9 @@ Int ClientPairManager::createPair() {
     if(targetCounter->second >= this->clientConfig->carryingCapacity){
         this->availableTunnelIDs.pop();
     }
+
+    // 返回结果
+    outputPair = std::move(pair);
 
     return 0;
 }

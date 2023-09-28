@@ -37,10 +37,11 @@ public:
     Int createTunnel();
 
     // 创建一个 Pair
-    Int createPair();
+    Int createPair(PairPtr& outputPair);
 protected:
 
 private:
+    // 因为不支持引用类的成员 所以要做一层转换
     std::function<SizeT(const PairPtr pair,const Byte* payload, SizeT len)> sendHandler = nullptr;
     std::function<void(const PairPtr pair)> onPairCloseHandler = nullptr;
 

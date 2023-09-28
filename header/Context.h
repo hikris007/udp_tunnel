@@ -14,7 +14,7 @@ class ClientPairContext {
 public:
     std::weak_ptr<ClientPairManager> _clientPairManagerPtr;
     std::weak_ptr<Tunnel> _tunnel;
-
+    std::string _sourceAddress;
 private:
 
 };
