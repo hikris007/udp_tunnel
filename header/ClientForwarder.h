@@ -12,7 +12,7 @@
 class ClientForwarder {
 public:
     // 接受到客户端数据
-    SizeT onSend(const std::string, Byte* payload, SizeT length);
+    SizeT onSend(const std::string& sourceAddress, Byte* payload, SizeT length);
 
     // 接收到响应数据
     std::function<SizeT(PairPtr pairPtr, Byte* payload, SizeT length)> onReceive = nullptr;

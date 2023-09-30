@@ -22,13 +22,8 @@ static const PairID INVALID_PAIR_ID = 0;
 
 class Pair : public std::enable_shared_from_this<Pair>{
 public:
-    Pair(PairID pairID);
-
-    void *context();// 获取上下文指针
-
-    template<class T> T *getContext();// 获取上下文指针(带类型)
-    template<class T> void deleteContext();// 删除上下文(带类型)
-    void setContext(void *ctx);// 设置上下文指针
+    explicit Pair(PairID pairID);
+    ~Pair();
 
     template<class T> std::shared_ptr<T> getContextPtr();// 获取上下文智能指针
     void deleteContextPtr();// 删除上下文智能指针
@@ -56,7 +51,7 @@ public:
 protected:
 private:
     PairID _pairID;
-    void *_ctx = nullptr;
+    Byte* _data = nullptr; // 暂存数据 把两段数据拼起来(包含 PairID 头)
     std::shared_ptr<void> _ctxPtr;
     std::mutex _locker;
     CallBackManager<const std::shared_ptr<Pair>> _onCloseCallbacks;

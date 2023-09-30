@@ -41,12 +41,6 @@ public:
 
     virtual ~Tunnel();
 
-
-    void* context();// 获取上下文指针
-    template<class T> T* getContext(); // 获取上下文指针
-    void setContext(void* ctx);// 设置上下文指针
-    template<class T> void deleteContext();// 删除上下文
-
     template<class T> std::shared_ptr<T> getContextPtr();// 获取上下文智能指针
     void setContextPtr(const std::shared_ptr<void>& ctx);// 设置上下文智能指针
     void deleteContextPtr();// 删除上下文智能指针
@@ -64,7 +58,7 @@ public:
 
     // 当有消息的回调
     // 传入当前隧道和发送完成的消息
-    std::function<void(const std::shared_ptr<Tunnel> tunnel, PayloadPtr payload)> onRecv = nullptr;
+    std::function<void(const std::shared_ptr<Tunnel> tunnel, PayloadPtr payload)> onReceive = nullptr;
 
     // 当隧道状态变更的回调
     // 传入当前隧道

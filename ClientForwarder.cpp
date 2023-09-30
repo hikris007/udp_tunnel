@@ -4,7 +4,7 @@
 
 #include "header/ClientForwarder.h"
 
-SizeT ClientForwarder::onSend(const std::string sourceAddress, Byte *payload, SizeT length) {
+SizeT ClientForwarder::onSend(const std::string& sourceAddress, Byte *payload, SizeT length) {
     PairPtr pairPtr = nullptr;
 
     // 如果此来源地址没有对应的 Pair 则分配一个

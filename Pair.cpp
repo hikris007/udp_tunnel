@@ -6,33 +6,18 @@
 
 Pair::Pair(PairID pairID) {
     this->_pairID = pairID;
+
+    // PairID 头大小 + UDP 包最大大小
+    int capacity = sizeof(PairID) + 65535;
+    this->_data = new Byte[capacity];
+
+    // 设置 PairID 头
+    memcpy(this->_data, &this->_pairID, sizeof(PairID));
 }
 
-void *Pair::context() {
-    return this->_ctx;
-}
-
-template<class T> T* Pair::getContext() {
-    std::lock_guard<std::mutex> locker(this->_locker);
-
-    return (T*)this->_ctx;
-}
-
-void Pair::setContext(void *ctx) {
-    std::lock_guard<std::mutex> locker(this->_locker);
-
-    this->_ctx = ctx;
-}
-
-template<class T>
-void Pair::deleteContext() {
-    std::lock_guard<std::mutex> locker(this->_locker);
-
-    if(this->_ctx == nullptr)
-        return;
-
-    delete (T*)this->_ctx;
-    this->_ctx = nullptr;
+Pair::~Pair() {
+    if(this->_data)
+        delete []this->_data;
 }
 
 template<class T>
@@ -64,7 +49,13 @@ SizeT Pair::send(const Byte *payload, SizeT len) {
     if(this->handleSend == nullptr)
         return 0;
 
-    return this->handleSend(shared_from_this(), payload, len);
+    memcpy(
+           this->_data + sizeof(PairID),
+           payload,
+           len
+    );
+
+    return this->handleSend(shared_from_this(), this->_data, sizeof(PairID) + len);
 }
 
 HANDLER_ID Pair::addOnCloseHandler(onCloseCallback callback) {
@@ -77,8 +68,6 @@ void Pair::removeOnCloseHandler(HANDLER_ID handlerID) {
 
 Int Pair::close() {
     std::lock_guard<std::mutex> locker(this->_locker);
-
     this->_onCloseCallbacks.trigger(shared_from_this());
-
     return 0;
 }
