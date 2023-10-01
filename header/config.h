@@ -12,6 +12,11 @@ typedef enum {
     DTLS
 } TransportProtocol;
 
+typedef enum {
+    SERVER,
+    CLIENT
+} RunMode;
+
 // 配置项
 struct ClientConfig {
     TransportProtocol transportProtocol;
@@ -23,6 +28,12 @@ struct ClientConfig {
 struct ServerConfig {
     TransportProtocol transportProtocol;
     std::string extraData;
+};
+
+struct Config {
+    RunMode runMode;
+    ServerConfig* serverConfig;
+    ClientConfig* clientConfig;
 };
 
 #endif //UDP_TUNNEL_CONFIG_H

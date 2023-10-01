@@ -47,7 +47,7 @@ private:
 
     ClientConfig* clientConfig = nullptr; // 配置项
     std::mutex _locker; // 锁
-    std::unordered_map<TunnelID, TunnelPtr> tunnels; // 传输层的列表
+    std::unordered_map<TunnelID, TunnelPtr> _tunnels; // 传输层的列表
     std::unordered_map<TunnelID ,int> tunnelPairCounter; // Key 是传输层的ID 值是空闲数量
     std::queue<TunnelID> availableTunnelIDs; // 存放可用的（有空闲位置的）底层传输层ID
 };

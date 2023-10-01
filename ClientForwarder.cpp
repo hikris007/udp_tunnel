@@ -21,6 +21,7 @@ SizeT ClientForwarder::onSend(const std::string& sourceAddress, Byte *payload, S
     // 如果是新添加的 Pair 则设置一些信息
     if(iterator == this->_sourceAddressMap.end()){
         clientPairContext->_sourceAddress = sourceAddress;
+        clientPairContext->_sourceAddressSockAddr = nullptr;
         this->_sourceAddressMap.insert({ sourceAddress, pairPtr });
     }
 

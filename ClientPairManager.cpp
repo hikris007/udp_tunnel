@@ -61,7 +61,7 @@ Int ClientPairManager::createTunnel() {
 
     // 放入列表
     TunnelID tunnelID = tunnelPtr->id();
-    this->tunnels.insert({ tunnelID, tunnelPtr });
+    this->_tunnels.insert({ tunnelID, tunnelPtr });
 
     // 添加到计数列表 & 添加到可用隧道列表
     this->tunnelPairCounter.insert({tunnelID, 0});
@@ -80,7 +80,7 @@ Int ClientPairManager::createPair(PairPtr& outputPair) {
 
     // 获取第一个空闲隧道
     TunnelID tunnelID = this->availableTunnelIDs.front();
-    auto iterator = this->tunnels.find(tunnelID);
+    auto iterator = this->_tunnels.find(tunnelID);
 
     TunnelPtr tunnel = iterator->second;
     ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
