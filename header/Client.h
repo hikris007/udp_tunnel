@@ -14,6 +14,7 @@ class Client {
 public:
     Client(Config* config);
     Int run();
+    Int shutdown();
 
 private:
     void garbageCollection();

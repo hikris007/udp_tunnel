@@ -20,20 +20,23 @@ typedef enum {
 // 配置项
 struct ClientConfig {
     TransportProtocol transportProtocol;
-    std::string extraData;
+    std::string listenDescription;
+    std::string endpoint;
     Uint16 carryingCapacity;
 };
 
 // 配置项
 struct ServerConfig {
     TransportProtocol transportProtocol;
-    std::string extraData;
+    std::string listenDescription;
+    std::string endpoint;
 };
 
 struct Config {
-    RunMode runMode;
-    ServerConfig* serverConfig;
-    ClientConfig* clientConfig;
+    TransportProtocol transportProtocol;
+    RunMode runMode = RunMode::CLIENT;
+    ServerConfig* serverConfig = nullptr;
+    ClientConfig* clientConfig = nullptr;
 };
 
 #endif //UDP_TUNNEL_CONFIG_H
