@@ -12,17 +12,31 @@ typedef enum {
     DTLS
 } TransportProtocol;
 
+typedef enum {
+    SERVER,
+    CLIENT
+} RunMode;
+
 // 配置项
 struct ClientConfig {
     TransportProtocol transportProtocol;
-    std::string extraData;
+    std::string listenDescription;
+    std::string endpoint;
     Uint16 carryingCapacity;
 };
 
 // 配置项
 struct ServerConfig {
     TransportProtocol transportProtocol;
-    std::string extraData;
+    std::string listenDescription;
+    std::string endpoint;
+};
+
+struct Config {
+    TransportProtocol transportProtocol;
+    RunMode runMode = RunMode::CLIENT;
+    ServerConfig* serverConfig = nullptr;
+    ClientConfig* clientConfig = nullptr;
 };
 
 #endif //UDP_TUNNEL_CONFIG_H

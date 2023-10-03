@@ -9,7 +9,7 @@
 // 自己的文件
 #include "header/Server.h"
 #include "header/Client.h"
-#include "header/config.h"
+#include "header/Config.h"
 
 ServerConfig serverConfig;
 ClientConfig clientConfig;

@@ -7,7 +7,7 @@
 
 #include "hv/EventLoop.h"
 #include "hv/UdpServer.h"
-#include "config.h"
+#include "Config.h"
 #include "ClientForwarder.h"
 #include "Logger.h"
 

@@ -5,7 +5,7 @@
 #ifndef UDP_TUNNEL_SERVER_H
 #define UDP_TUNNEL_SERVER_H
 
-#include "config.h"
+#include "Config.h"
 #include "ServerPairManager.h"
 
 class Server {
