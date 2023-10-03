@@ -9,22 +9,27 @@
 #include "hv/UdpServer.h"
 #include "config.h"
 #include "ClientForwarder.h"
+#include "Logger.h"
 
 class Client {
 public:
-    Client(Config* config);
+    explicit Client(Config* config);
     Int run();
     Int shutdown();
 
 private:
+    Int init();
     void garbageCollection();
 
 protected:
 private:
+    std::mutex _locker;
+    bool isRunning = false;
     Config* _config = nullptr;
     hv::EventLoopPtr _eventLoopPtr = nullptr;
+    hv::TimerID gcTimerID = INVALID_TIMER_ID;
     std::unique_ptr<ClientForwarder> _clientForwarderPtr = nullptr;
-    std::unique_ptr<hv::UdpServer> _udpServerPtr;
+    std::unique_ptr<hv::UdpServer> _udpServerPtr = nullptr;
 };
 
 

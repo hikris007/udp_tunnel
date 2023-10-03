@@ -11,11 +11,12 @@ Client::Client(Config *config) {
     this->_udpServerPtr = std::unique_ptr<hv::UdpServer>(new hv::UdpServer(this->_eventLoopPtr));
 }
 
-Int Client::run() {
-    // TODO: 端口
+Int Client::init() {
     int fd = this->_udpServerPtr->createsocket(8899);
     if(fd < 0){
-        // TODO: 创建失败
+        // TODO: 待测试
+        Logger::getInstance().getLogger()->error("Failed to create socket, fd: {}", fd);
+        return -1;
     }
 
     // 注册事件
@@ -45,13 +46,38 @@ Int Client::run() {
         );
     };
 
+    return 0;
+}
+
+Int Client::run() {
+    std::lock_guard<std::mutex> locker(this->_locker);
+
+    if(this->isRunning)
+        return 0;
+
     // 垃圾回收
-    this->_eventLoopPtr->setInterval(5000, [this](hv::TimerID timerID){
+    this->gcTimerID = this->_eventLoopPtr->setInterval(5000, [this](hv::TimerID timerID){
         this->garbageCollection();
     });
 
     // 开始
     this->_udpServerPtr->start();
+
+    this->isRunning = true;
+    return 0;
+}
+
+Int Client::shutdown() {
+    if(!this->isRunning)
+        return 0;
+
+    if(this->gcTimerID != INVALID_TIMER_ID){
+        this->_eventLoopPtr->killTimer(this->gcTimerID);
+    }
+
+    this->_udpServerPtr->stop();
+
+    this->isRunning = false;
 
     return 0;
 }

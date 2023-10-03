@@ -3,3 +3,12 @@
 //
 
 #include "header/Logger.h"
+
+Logger &Logger::getInstance() {
+    static Logger instance;
+    return instance;
+}
+
+std::shared_ptr<spdlog::logger> Logger::getLogger() {
+    return this->_logger;
+}

@@ -10,6 +10,9 @@
 
 class Logger {
 public:
+    static Logger& getInstance();
+    std::shared_ptr<spdlog::logger> getLogger();
+
     // 删除复制和赋值操作
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
@@ -17,6 +20,9 @@ private:
 
     // 私有构造函数，确保外部无法创建新实例
     Logger() {}
+
+private:
+    std::shared_ptr<spdlog::logger> _logger = nullptr;
 };
 
 
