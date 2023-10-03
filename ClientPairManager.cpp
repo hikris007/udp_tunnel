@@ -16,6 +16,27 @@ ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     };
 }
 
+void ClientPairManager::onReceive(TunnelPtr tunnel, const Byte *payload, SizeT len) {
+    if(payload == nullptr || len <= (sizeof(PairID) + 1))
+        return;
+
+    // 获取 PairID
+    PairID pairID = INVALID_PAIR_ID;
+    memcpy(&pairID, payload, sizeof(PairID));
+
+    // 根据 PairID 找到 Pair
+    PairPtr pair = nullptr;
+    ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+    clientTunnelContext->getPair(pairID, pair);
+    if(pair == nullptr)
+        return;
+
+    if(!pair->onReceive)
+        return;
+
+    pair->onReceive(pair, payload+sizeof(PairID), len - sizeof(PairID));
+}
+
 SizeT ClientPairManager::onSend(PairPtr pair, const Byte *payload, SizeT len) {
     // 获取 Pair 上下文
     ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();

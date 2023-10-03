@@ -15,8 +15,6 @@
 class ClientPairContext {
 public:
     long long lastDataReceivedTime = 0;
-    long long lastDataSentTime = 0;
-
     std::weak_ptr<ClientPairManager> _clientPairManagerPtr;
     TunnelID _tunnelID = INVALID_TUNNEL_ID;
     std::string _sourceAddress;
@@ -58,6 +56,22 @@ public:
     void addPair(PairPtr pair){
         std::lock_guard<std::mutex> locker(this->_locker);
         this->_pairs.insert({ pair->id(), std::move(pair) });
+    }
+
+    void getPair(PairID pairID, PairPtr& pairPtr){
+        if(pairID == INVALID_PAIR_ID)
+            return;
+
+        std::lock_guard<std::mutex> locker(this->_locker);
+
+        auto iterator = this->_pairs.find(pairID);
+        if(iterator == this->_pairs.end())
+            return;
+
+        if(iterator->second.expired())
+            return;
+
+        pairPtr = iterator->second.lock();
     }
 
     void removePair(const PairPtr& pair){

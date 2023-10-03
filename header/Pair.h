@@ -16,7 +16,7 @@ class Pair;
 typedef Uint32 PairID;
 typedef std::function<void(const std::shared_ptr<Pair> pair)> onCloseCallback;
 typedef std::function<SizeT(const std::shared_ptr<Pair> pair,const Byte* payload, SizeT len)> sendHandler;
-typedef std::function<void(const std::shared_ptr<Pair> pair,const Byte* payload)> onRecvCallback;
+typedef std::function<void(const std::shared_ptr<Pair> pair,const Byte* payload, SizeT len)> onRecvCallback;
 
 static const PairID INVALID_PAIR_ID = 0;
 

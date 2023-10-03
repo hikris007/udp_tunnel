@@ -26,7 +26,7 @@ public:
     explicit ClientPairManager(ClientConfig* clientConfig);
 
     // 从隧道出来的整个 Pair
-    void onReceive(TunnelPtr tunnelPtr, const Byte* payload, SizeT len);
+    void onReceive(TunnelPtr tunnel, const Byte* payload, SizeT len);
 
     // Pair 调用这个函数发送数据
     SizeT onSend(PairPtr pairPtr, const Byte* payload, SizeT len);
