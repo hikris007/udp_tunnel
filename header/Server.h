@@ -6,13 +6,18 @@
 #define UDP_TUNNEL_SERVER_H
 
 #include "config.h"
+#include "ServerPairManager.h"
 
 class Server {
 public:
-    Server(Config* config);
+    Server(ServerConfig* config);
 
     Int run();
     Int shutdown();
+
+private:
+    ServerConfig* _config = nullptr;
+    std::shared_ptr<ServerPairManager> _serverPairManager = nullptr;
 };
 
 

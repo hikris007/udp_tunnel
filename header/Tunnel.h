@@ -60,7 +60,7 @@ public:
 
     // 当有消息的回调
     // 传入当前隧道和发送完成的消息
-    std::function<void(const std::shared_ptr<Tunnel> tunnel, PayloadPtr payload)> onReceive = nullptr;
+    std::function<void(const std::shared_ptr<Tunnel> tunnel, const Byte* payload, SizeT length)> onReceive = nullptr;
 
     // 当隧道状态变更的回调
     // 传入当前隧道

@@ -3,3 +3,9 @@
 //
 
 #include "header/Server.h"
+
+Server::Server(ServerConfig *config) {
+    this->_config = config;
+
+    this->_serverPairManager = std::make_shared<ServerPairManager>();
+}

@@ -25,7 +25,7 @@ private:
 
 class ServerPairContext {
 public:
-    std::unique_ptr<hv::UdpClient> udpClient = nullptr;
+    std::shared_ptr<hv::UdpClient> udpClient = nullptr;
 };
 
 class ClientTunnelContext {
