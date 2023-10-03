@@ -4,6 +4,10 @@
 
 #include "header/ClientForwarder.h"
 
+ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientPairManager) {
+    this->_clientPairManager = std::move(clientPairManager);
+}
+
 SizeT ClientForwarder::onSend(const std::string& sourceAddress, Byte *payload, SizeT length) {
     PairPtr pairPtr = nullptr;
 

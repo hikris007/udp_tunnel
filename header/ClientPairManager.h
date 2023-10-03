@@ -22,7 +22,7 @@
 
 class ClientPairManager : public std::enable_shared_from_this<ClientPairManager>{
 public:
-    ClientPairManager();
+    explicit ClientPairManager(ClientConfig* clientConfig);
 
     // 从隧道出来的整个 Pair
     void onReceive(TunnelPtr tunnelPtr, const Byte* payload, SizeT len);
@@ -45,11 +45,11 @@ private:
     std::function<SizeT(const PairPtr pair,const Byte* payload, SizeT len)> sendHandler = nullptr;
     std::function<void(const PairPtr pair)> onPairCloseHandler = nullptr;
 
-    ClientConfig* clientConfig = nullptr; // 配置项
+    ClientConfig* _clientConfig = nullptr; // 配置项
     std::mutex _locker; // 锁
     std::unordered_map<TunnelID, TunnelPtr> _tunnels; // 传输层的列表
-    std::unordered_map<TunnelID ,int> tunnelPairCounter; // Key 是传输层的ID 值是空闲数量
-    std::queue<TunnelID> availableTunnelIDs; // 存放可用的（有空闲位置的）底层传输层ID
+    std::unordered_map<TunnelID ,int> _tunnelPairCounter; // Key 是传输层的ID 值是空闲数量
+    std::queue<TunnelID> _availableTunnelIDs; // 存放可用的（有空闲位置的）底层传输层ID
 };
 
 

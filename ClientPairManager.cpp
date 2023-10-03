@@ -4,7 +4,9 @@
 
 #include "header/ClientPairManager.h"
 
-ClientPairManager::ClientPairManager() {
+ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
+    this->_clientConfig = clientConfig;
+
     this->sendHandler = [this](PairPtr pair,const Byte* payload, SizeT len){
         return this->onSend(pair, payload, len);
     };
@@ -55,7 +57,7 @@ Int ClientPairManager::createTunnel() {
 
     // 配置上下文 & 设置上下文
     ClientTunnelContextPtr clientTunnelContext = std::make_shared<ClientTunnelContext>(
-          this->clientConfig->carryingCapacity
+          this->_clientConfig->carryingCapacity
     );
     tunnel->setContextPtr(clientTunnelContext);
 
@@ -64,8 +66,8 @@ Int ClientPairManager::createTunnel() {
     this->_tunnels.insert({ tunnelID, tunnelPtr });
 
     // 添加到计数列表 & 添加到可用隧道列表
-    this->tunnelPairCounter.insert({tunnelID, 0});
-    this->availableTunnelIDs.push(tunnelID);
+    this->_tunnelPairCounter.insert({tunnelID, 0});
+    this->_availableTunnelIDs.push(tunnelID);
 
     return 0;
 }
@@ -74,12 +76,12 @@ Int ClientPairManager::createPair(PairPtr& outputPair) {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     // 如果没有可用的隧道就先创建
-    if(this->availableTunnelIDs.empty()){
+    if(this->_availableTunnelIDs.empty()){
         this->createTunnel();
     }
 
     // 获取第一个空闲隧道
-    TunnelID tunnelID = this->availableTunnelIDs.front();
+    TunnelID tunnelID = this->_availableTunnelIDs.front();
     auto iterator = this->_tunnels.find(tunnelID);
 
     TunnelPtr tunnel = iterator->second;
@@ -103,12 +105,12 @@ Int ClientPairManager::createPair(PairPtr& outputPair) {
     clientTunnelContext->addPair(pair);
 
     // 在计数器中查找 & 因为要使用这个底层传输 所以计数+1
-    std::unordered_map<TunnelID ,int>::iterator targetCounter = this->tunnelPairCounter.find(tunnelID);
+    std::unordered_map<TunnelID ,int>::iterator targetCounter = this->_tunnelPairCounter.find(tunnelID);
     targetCounter->second++;
 
     // 如果隧道的空位满了就从可用列表中移除
-    if(targetCounter->second >= this->clientConfig->carryingCapacity){
-        this->availableTunnelIDs.pop();
+    if(targetCounter->second >= this->_clientConfig->carryingCapacity){
+        this->_availableTunnelIDs.pop();
     }
 
     // 返回结果

@@ -11,6 +11,8 @@
 
 class ClientForwarder {
 public:
+    explicit ClientForwarder(std::shared_ptr<ClientPairManager> clientPairManager);
+
     // 接受到客户端数据
     SizeT onSend(const std::string& sourceAddress, Byte* payload, SizeT length);
 
@@ -20,7 +22,7 @@ protected:
 private:
 
     std::unordered_map<std::string, PairPtr> _sourceAddressMap;
-    std::shared_ptr<ClientPairManager> _clientPairManager;
+    std::shared_ptr<ClientPairManager> _clientPairManager = nullptr;
 };
 
 
