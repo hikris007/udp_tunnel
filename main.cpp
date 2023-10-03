@@ -11,11 +11,18 @@
 #include "header/Client.h"
 #include "header/config.h"
 
-int main(int argc, char** argv) {
-    ServerConfig serverConfig;
-    ClientConfig clientConfig;
+ServerConfig serverConfig;
+ClientConfig clientConfig;
 
-    Config config;
+Config config;
+
+std::shared_ptr<Server> serverPtr = nullptr;
+std::shared_ptr<Client> clientPtr = nullptr;
+
+void handleSystemSignal(int signal);
+
+int main(int argc, char** argv) {
+
     config.serverConfig = &serverConfig;
     config.clientConfig = &clientConfig;
 
@@ -61,15 +68,10 @@ int main(int argc, char** argv) {
         config.clientConfig->endpoint = endpoint;
 
         // 业务
-        Server server(&config);
+        serverPtr = std::make_shared<Server>(&config);
+        std::signal(SIGINT, handleSystemSignal);
 
-        auto cleanup = [](int signal){
-
-        };
-
-        std::signal(SIGINT, cleanup);
-
-        server.run();
+        serverPtr->run();
     }
 
     if(clientMode){
@@ -80,16 +82,27 @@ int main(int argc, char** argv) {
         config.serverConfig->listenDescription = listenDescription;
 
         // 业务
-        Client client(&config);
+        clientPtr = std::make_shared<Client>(&config);
+        std::signal(SIGINT, handleSystemSignal);
 
-        auto cleanup = [](int signal){
-
-        };
-
-        std::signal(SIGINT, cleanup);
-
-        client.run();
+        clientPtr->run();
     }
 
     return 0;
+}
+
+void handleSystemSignal(int signal){
+    if(config.runMode == RunMode::SERVER){
+        if(serverPtr == nullptr)
+            return;
+
+        serverPtr->shutdown();
+    }
+
+    if(config.runMode == RunMode::CLIENT){
+        if(clientPtr == nullptr)
+            return;
+
+        clientPtr->shutdown();
+    }
 }
