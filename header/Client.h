@@ -7,13 +7,14 @@
 
 #include "hv/EventLoop.h"
 #include "hv/UdpServer.h"
-#include "Config.h"
+#include "AppContext.h"
 #include "ClientForwarder.h"
 #include "Logger.h"
+#include "Context.h"
 
 class Client {
 public:
-    explicit Client(Config* config);
+    explicit Client(AppContext* config);
     Int run();
     Int shutdown();
 
@@ -26,7 +27,7 @@ private:
     std::mutex _locker;
     bool isRunning = false;
 
-    Config* _config = nullptr;
+    AppContext* _appContext = nullptr;
 
     hv::EventLoopPtr _eventLoop = nullptr;
     hv::TimerID gcTimerID = INVALID_TIMER_ID;

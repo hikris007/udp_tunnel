@@ -5,18 +5,19 @@
 #ifndef UDP_TUNNEL_SERVER_H
 #define UDP_TUNNEL_SERVER_H
 
-#include "Config.h"
+#include "AppContext.h"
 #include "ServerPairManager.h"
 
 class Server {
 public:
-    Server(ServerConfig* config);
+    Server(AppContext* appContext);
 
     Int run();
     Int shutdown();
 
 private:
-    ServerConfig* _config = nullptr;
+    AppContext* _appContext = nullptr;
+    hv::EventLoopPtr _eventLoop = nullptr;
     std::shared_ptr<ServerPairManager> _serverPairManager = nullptr;
 };
 

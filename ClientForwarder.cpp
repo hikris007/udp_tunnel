@@ -3,6 +3,7 @@
 //
 
 #include "header/ClientForwarder.h"
+#include "header/Context.h"
 
 ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientPairManager) {
     this->_clientPairManager = std::move(clientPairManager);

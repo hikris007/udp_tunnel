@@ -4,10 +4,10 @@
 
 #include "header/Client.h"
 
-Client::Client(Config *config) {
-    this->_config = config;
+Client::Client(AppContext *config) {
+    this->_appContext = config;
     this->_eventLoop = std::make_shared<hv::EventLoop>();
-    this->_clientPairManager = std::make_shared<ClientPairManager>(this->_config->clientConfig);
+    this->_clientPairManager = std::make_shared<ClientPairManager>(this->_appContext->clientConfig);
     this->_clientForwarder = std::unique_ptr<ClientForwarder>(new ClientForwarder(this->_clientPairManager));
     this->_udpServer = std::unique_ptr<hv::UdpServer>(new hv::UdpServer(this->_eventLoop));
 }
@@ -15,7 +15,6 @@ Client::Client(Config *config) {
 Int Client::init() {
     int fd = this->_udpServer->createsocket(8899);
     if(fd < 0){
-        // TODO: 待测试
         Logger::getInstance().getLogger()->error("Failed to create socket, fd: {}", fd);
         return -1;
     }

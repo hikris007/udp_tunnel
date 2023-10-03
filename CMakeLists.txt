@@ -7,7 +7,17 @@ find_package(libhv CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
 
-add_executable(udp_tunnel main.cpp)
+add_executable(udp_tunnel
+        Client.cpp
+        ClientForwarder.cpp
+        ClientPairManager.cpp
+        Logger.cpp
+        Pair.cpp
+        Server.cpp
+        ServerPairManager.cpp
+        TunnelFactory.cpp
+        main.cpp
+)
 add_executable(test test.cpp)
 
 target_link_libraries(udp_tunnel PRIVATE hv_static)

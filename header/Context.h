@@ -9,13 +9,14 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "hv/UdpClient.h"
-#include "ClientPairManager.h"
 #include "netinet/in.h"
+#include "ClientPairManager.h"
 
 class ClientPairContext {
 public:
     long long lastDataReceivedTime = 0;
-    std::weak_ptr<ClientPairManager> _clientPairManagerPtr;
+    long long lastDataSentTime = 0;
+    std::shared_ptr<ClientPairManager> _clientPairManagerPtr = nullptr;
     TunnelID _tunnelID = INVALID_TUNNEL_ID;
     std::string _sourceAddress;
     sockaddr* _sourceAddressSockAddr = nullptr;

@@ -12,8 +12,7 @@
 #include "Pair.h"
 #include "Tunnel.h"
 #include "TunnelFactory.h"
-#include "./Config.h"
-#include "Context.h"
+#include "./AppContext.h"
 #include "Logger.h"
 
 /**

@@ -9,12 +9,12 @@
 // 自己的文件
 #include "header/Server.h"
 #include "header/Client.h"
-#include "header/Config.h"
+#include "header/AppContext.h"
 
 ServerConfig serverConfig;
 ClientConfig clientConfig;
 
-Config config;
+AppContext appContext;
 
 std::shared_ptr<Server> serverPtr = nullptr;
 std::shared_ptr<Client> clientPtr = nullptr;
@@ -23,8 +23,8 @@ void handleSystemSignal(int signal);
 
 int main(int argc, char** argv) {
 
-    config.serverConfig = &serverConfig;
-    config.clientConfig = &clientConfig;
+    appContext.serverConfig = &serverConfig;
+    appContext.clientConfig = &clientConfig;
 
     // 参数解析
     CLI::App app("描述");
@@ -60,29 +60,29 @@ int main(int argc, char** argv) {
     TransportProtocol transportProtocol = transportProtocolMap[transportProtocolStr];
 
     if(serverMode){
-        config.runMode = RunMode::SERVER;
+        appContext.runMode = RunMode::SERVER;
 
-        config.clientConfig->transportProtocol = transportProtocol;
-        config.clientConfig->carryingCapacity = carryingCapacity;
-        config.clientConfig->listenDescription = listenDescription;
-        config.clientConfig->endpoint = endpoint;
+        appContext.clientConfig->transportProtocol = transportProtocol;
+        appContext.clientConfig->carryingCapacity = carryingCapacity;
+        appContext.clientConfig->listenDescription = listenDescription;
+        appContext.clientConfig->endpoint = endpoint;
 
         // 业务
-        serverPtr = std::make_shared<Server>(&config);
+        serverPtr = std::make_shared<Server>(&appContext);
         std::signal(SIGINT, handleSystemSignal);
 
         serverPtr->run();
     }
 
     if(clientMode){
-        config.runMode = RunMode::CLIENT;
+        appContext.runMode = RunMode::CLIENT;
 
-        config.serverConfig->transportProtocol = transportProtocol;
-        config.serverConfig->endpoint = endpoint;
-        config.serverConfig->listenDescription = listenDescription;
+        appContext.serverConfig->transportProtocol = transportProtocol;
+        appContext.serverConfig->endpoint = endpoint;
+        appContext.serverConfig->listenDescription = listenDescription;
 
         // 业务
-        clientPtr = std::make_shared<Client>(&config);
+        clientPtr = std::make_shared<Client>(&appContext);
         std::signal(SIGINT, handleSystemSignal);
 
         clientPtr->run();
@@ -92,14 +92,14 @@ int main(int argc, char** argv) {
 }
 
 void handleSystemSignal(int signal){
-    if(config.runMode == RunMode::SERVER){
+    if(appContext.runMode == RunMode::SERVER){
         if(serverPtr == nullptr)
             return;
 
         serverPtr->shutdown();
     }
 
-    if(config.runMode == RunMode::CLIENT){
+    if(appContext.runMode == RunMode::CLIENT){
         if(clientPtr == nullptr)
             return;
 

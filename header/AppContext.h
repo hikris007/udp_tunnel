@@ -2,8 +2,8 @@
 // Created by Kris Allen on 2023/9/18.
 //
 
-#ifndef UDP_TUNNEL_CONFIG_H
-#define UDP_TUNNEL_CONFIG_H
+#ifndef UDP_TUNNEL_APPCONTEXT_H
+#define UDP_TUNNEL_APPCONTEXT_H
 #include <string>
 #include "typedef.h"
 
@@ -32,11 +32,11 @@ struct ServerConfig {
     std::string endpoint;
 };
 
-struct Config {
+struct AppContext {
     TransportProtocol transportProtocol;
     RunMode runMode = RunMode::CLIENT;
     ServerConfig* serverConfig = nullptr;
     ClientConfig* clientConfig = nullptr;
 };
 
-#endif //UDP_TUNNEL_CONFIG_H
+#endif //UDP_TUNNEL_APPCONTEXT_H

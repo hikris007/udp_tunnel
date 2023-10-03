@@ -5,7 +5,7 @@
 #include "header/ServerPairManager.h"
 
 ServerPairManager::ServerPairManager(hv::EventLoopPtr eventLoop) {
-    this->_eventLoop = eventLoop;
+    this->_eventLoop = std::move(eventLoop);
 
     this->handleSend = [this](const std::shared_ptr<Pair> pair,const Byte* payload, SizeT len){
         // 获取上下文

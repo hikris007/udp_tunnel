@@ -3,6 +3,8 @@
 //
 
 #include "header/ClientPairManager.h"
+#include "header/Context.h"
+
 
 ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     this->_clientConfig = clientConfig;
@@ -129,7 +131,7 @@ Int ClientPairManager::createPair(PairPtr& outputPair) {
     clientTunnelContext->addPair(pair);
 
     // 在计数器中查找 & 因为要使用这个底层传输 所以计数+1
-    std::unordered_map<TunnelID ,int>::iterator targetCounter = this->_tunnelPairCounter.find(tunnelID);
+    auto targetCounter = this->_tunnelPairCounter.find(tunnelID);
     targetCounter->second++;
 
     // 如果隧道的空位满了就从可用列表中移除
