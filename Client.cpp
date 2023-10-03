@@ -10,6 +10,8 @@ Client::Client(AppContext *config) {
     this->_clientPairManager = std::make_shared<ClientPairManager>(this->_appContext->clientConfig);
     this->_clientForwarder = std::unique_ptr<ClientForwarder>(new ClientForwarder(this->_clientPairManager));
     this->_udpServer = std::unique_ptr<hv::UdpServer>(new hv::UdpServer(this->_eventLoop));
+
+    this->init();
 }
 
 Int Client::init() {
