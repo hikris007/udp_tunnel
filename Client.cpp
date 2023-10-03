@@ -6,13 +6,14 @@
 
 Client::Client(Config *config) {
     this->_config = config;
-    this->_eventLoopPtr = std::make_shared<hv::EventLoop>();
-    this->_clientForwarderPtr = std::unique_ptr<ClientForwarder>(new ClientForwarder());
-    this->_udpServerPtr = std::unique_ptr<hv::UdpServer>(new hv::UdpServer(this->_eventLoopPtr));
+    this->_eventLoop = std::make_shared<hv::EventLoop>();
+    this->_clientPairManager = std::make_shared<ClientPairManager>(this->_config->clientConfig);
+    this->_clientForwarder = std::unique_ptr<ClientForwarder>(new ClientForwarder(this->_clientPairManager));
+    this->_udpServer = std::unique_ptr<hv::UdpServer>(new hv::UdpServer(this->_eventLoop));
 }
 
 Int Client::init() {
-    int fd = this->_udpServerPtr->createsocket(8899);
+    int fd = this->_udpServer->createsocket(8899);
     if(fd < 0){
         // TODO: 待测试
         Logger::getInstance().getLogger()->error("Failed to create socket, fd: {}", fd);
@@ -22,8 +23,8 @@ Int Client::init() {
     // 注册事件
 
     // 当从本地接收到包就写入处理
-    this->_udpServerPtr->onMessage = [this](const hv::SocketChannelPtr& channel, hv::Buffer* buffer){
-        this->_clientForwarderPtr->onSend(
+    this->_udpServer->onMessage = [this](const hv::SocketChannelPtr& channel, hv::Buffer* buffer){
+        this->_clientForwarder->onSend(
                 channel->peeraddr(),
                 static_cast<Byte*>(buffer->data()),
                 buffer->size()
@@ -31,7 +32,7 @@ Int Client::init() {
     };
 
     // 收到响应包就写回去
-    this->_clientForwarderPtr->onReceive = [this](PairPtr pairPtr, Byte* payload, SizeT length){
+    this->_clientForwarder->onReceive = [this](PairPtr pairPtr, Byte* payload, SizeT length){
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pairPtr->getContextPtr<ClientPairContext>();
 
@@ -39,7 +40,7 @@ Int Client::init() {
         sockaddr* sourceAddress = clientPairContext->_sourceAddressSockAddr;
 
         // 写回去
-        return this->_udpServerPtr->sendto(
+        return this->_udpServer->sendto(
                 payload,
                 length,
                 sourceAddress
@@ -56,28 +57,31 @@ Int Client::run() {
         return 0;
 
     // 垃圾回收
-    this->gcTimerID = this->_eventLoopPtr->setInterval(5000, [this](hv::TimerID timerID){
+    this->gcTimerID = this->_eventLoop->setInterval(5000, [this](hv::TimerID timerID){
         this->garbageCollection();
     });
 
     // 开始
-    this->_udpServerPtr->start();
+    this->_udpServer->start();
 
     this->isRunning = true;
+    Logger::getInstance().getLogger()->warn("The client is running.");
+
     return 0;
 }
 
 Int Client::shutdown() {
+    Logger::getInstance().getLogger()->debug("Client->shutdown()");
     if(!this->isRunning)
         return 0;
 
     if(this->gcTimerID != INVALID_TIMER_ID){
-        this->_eventLoopPtr->killTimer(this->gcTimerID);
+        this->_eventLoop->killTimer(this->gcTimerID);
     }
 
-    this->_udpServerPtr->stop();
+    this->_udpServer->stop();
 
     this->isRunning = false;
-
+    Logger::getInstance().getLogger()->warn("The client is shutdown.");
     return 0;
 }

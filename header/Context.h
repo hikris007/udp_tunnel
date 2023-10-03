@@ -14,8 +14,11 @@
 
 class ClientPairContext {
 public:
+    long long lastDataReceivedTime = 0;
+    long long lastDataSentTime = 0;
+
     std::weak_ptr<ClientPairManager> _clientPairManagerPtr;
-    std::weak_ptr<Tunnel> _tunnel;
+    TunnelID _tunnelID = INVALID_TUNNEL_ID;
     std::string _sourceAddress;
     sockaddr* _sourceAddressSockAddr = nullptr;
 private:
@@ -24,7 +27,7 @@ private:
 
 class ServerPairContext {
 public:
-    std::unique_ptr<hv::UdpClient> udpClientPtr = nullptr;
+    std::unique_ptr<hv::UdpClient> udpClient = nullptr;
 };
 
 class ClientTunnelContext {
@@ -52,14 +55,14 @@ public:
         this->_availablePairIDs.insert(pairID);
     }
 
-    void addPair(PairPtr pairPtr){
+    void addPair(PairPtr pair){
         std::lock_guard<std::mutex> locker(this->_locker);
-        this->_pairs.insert({ pairPtr->id(), pairPtr });
+        this->_pairs.insert({ pair->id(), std::move(pair) });
     }
 
-    void removePair(PairPtr pairPtr){
+    void removePair(const PairPtr& pair){
         std::lock_guard<std::mutex> locker(this->_locker);
-        auto iterator = this->_pairs.find(pairPtr->id());
+        auto iterator = this->_pairs.find(pair->id());
         if(iterator == this->_pairs.end())
             return;
 
@@ -83,14 +86,14 @@ private:
 
 class ServerTunnelContext {
 public:
-    void addPair(PairPtr pairPtr){
+    void addPair(PairPtr pair){
         std::lock_guard<std::mutex> locker(this->_locker);
-        this->_pairs.insert({ pairPtr->id(), pairPtr });
+        this->_pairs.insert({ pair->id(), pair });
     }
 
-    void removePair(PairPtr pairPtr){
+    void removePair(const PairPtr& pair){
         std::lock_guard<std::mutex> locker(this->_locker);
-        auto iterator = this->_pairs.find(pairPtr->id());
+        auto iterator = this->_pairs.find(pair->id());
         if(iterator == this->_pairs.end())
             return;
 

@@ -14,6 +14,7 @@
 #include "TunnelFactory.h"
 #include "./Config.h"
 #include "Context.h"
+#include "Logger.h"
 
 /**
  * Send: Client -> TunnelClient -> TunnelServer -> Server

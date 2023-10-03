@@ -20,31 +20,34 @@ SizeT ClientPairManager::onSend(PairPtr pair, const Byte *payload, SizeT len) {
     // 获取 Pair 上下文
     ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
-    // 从上下文中获取所属的隧道
-    std::weak_ptr<Tunnel> tunnel = clientPairContext->_tunnel;
-    if(tunnel.expired()){
-        // TODO: 当隧道不存在
+    // 从上下文中获取所属的隧道 ID && 获取隧道
+    TunnelID tunnelID = clientPairContext->_tunnelID;
+    TunnelPtr tunnel = nullptr;
+
+    auto iterator = this->_tunnels.find(tunnelID);
+    if(iterator == this->_tunnels.end())
         return -1;
-    }
 
-    TunnelPtr tunnelPtr = tunnel.lock();
+    tunnel = iterator->second;
 
-    // TODO: 写入数据
-    tunnelPtr->send(payload, len);
+    return tunnel->send(payload, len);
 }
 
 void ClientPairManager::onPairClose(PairPtr pair) {
     // 获取上下文
     ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
-    // 从上下文中获取所属的隧道
-    std::weak_ptr<Tunnel> tunnel = clientPairContext->_tunnel;
-    if(tunnel.expired())
+    // 从上下文中获取所属的隧道 ID && 获取隧道
+    TunnelID tunnelID = clientPairContext->_tunnelID;
+    TunnelPtr tunnel = nullptr;
+
+    auto iterator = this->_tunnels.find(tunnelID);
+    if(iterator == this->_tunnels.end())
         return;
 
-    TunnelPtr tunnelPtr = tunnel.lock();
-    ClientTunnelContextPtr clientTunnelContext = tunnelPtr->getContextPtr<ClientTunnelContext>();
+    tunnel = iterator->second;
 
+    ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
     clientTunnelContext->removePair(pair);
 }
 
@@ -97,7 +100,7 @@ Int ClientPairManager::createPair(PairPtr& outputPair) {
 
     // Pair 上下文
     ClientPairContextPtr clientPairContext = ClientPairContextPtr();
-    clientPairContext->_tunnel = tunnel;
+    clientPairContext->_tunnelID = tunnel->id();
     clientPairContext->_clientPairManagerPtr = shared_from_this();
     pair->setContextPtr(clientPairContext);
 

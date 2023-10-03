@@ -11,6 +11,8 @@
 
 typedef Uint32 TunnelID;
 
+const TunnelID INVALID_TUNNEL_ID = 0;
+
 class Tunnel {
 public:
     enum State {

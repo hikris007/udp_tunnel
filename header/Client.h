@@ -25,11 +25,17 @@ protected:
 private:
     std::mutex _locker;
     bool isRunning = false;
+
     Config* _config = nullptr;
-    hv::EventLoopPtr _eventLoopPtr = nullptr;
+
+    hv::EventLoopPtr _eventLoop = nullptr;
     hv::TimerID gcTimerID = INVALID_TIMER_ID;
-    std::unique_ptr<ClientForwarder> _clientForwarderPtr = nullptr;
-    std::unique_ptr<hv::UdpServer> _udpServerPtr = nullptr;
+
+    std::unique_ptr<ClientForwarder> _clientForwarder = nullptr;
+    std::shared_ptr<ClientPairManager> _clientPairManager = nullptr;
+
+
+    std::unique_ptr<hv::UdpServer> _udpServer = nullptr;
 };
 
 
