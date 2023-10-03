@@ -4,6 +4,11 @@
 
 #include "header/Logger.h"
 
+Logger::Logger()  {
+    this->_logger = spdlog::stdout_color_mt("console");
+    spdlog::set_pattern("[%H:%M:%S.%e] [%^%L%$] [%s:%#] %v");
+}
+
 Logger &Logger::getInstance() {
     static Logger instance;
     return instance;
