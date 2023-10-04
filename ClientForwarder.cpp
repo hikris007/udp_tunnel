@@ -10,26 +10,27 @@ ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientPairMa
 }
 
 SizeT ClientForwarder::onSend(const std::string& sourceAddress, Byte *payload, SizeT length) {
-    PairPtr pairPtr = nullptr;
+    PairPtr pair = nullptr;
 
     // 如果此来源地址没有对应的 Pair 则分配一个
     auto iterator = this->_sourceAddressMap.find(sourceAddress);
     if(iterator == this->_sourceAddressMap.end()){
-        this->_clientPairManager->createPair(pairPtr);
+        this->_clientPairManager->createPair(pair);
     }else{
-        pairPtr = iterator->second;
+        pair = iterator->second;
     }
 
     // 获取上下文
-    ClientPairContextPtr clientPairContext = pairPtr->getContextPtr<ClientPairContext>();
+    ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
     // 如果是新添加的 Pair 则设置一些信息
     if(iterator == this->_sourceAddressMap.end()){
         clientPairContext->_sourceAddress = sourceAddress;
         clientPairContext->_sourceAddressSockAddr = nullptr;
-        this->_sourceAddressMap.insert({ sourceAddress, pairPtr });
+        this->_sourceAddressMap.insert({ sourceAddress, pair });
+        Logger::getInstance().getLogger()->info("New pair {} <---> {}.", pair->id(), sourceAddress);
     }
 
     // 写入数据
-    return pairPtr->send(payload, length);
+    return pair->send(payload, length);
 }

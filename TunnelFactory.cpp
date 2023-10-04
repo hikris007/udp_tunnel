@@ -3,3 +3,8 @@
 //
 
 #include "header/TunnelFactory.h"
+
+Tunnel *TunnelFactory::createTunnel() {
+    TestTunnel* tunnel = new TestTunnel;
+    return tunnel;
+}

@@ -38,6 +38,9 @@ public:
 
     // 创建一个 Pair
     Int createPair(PairPtr& outputPair);
+
+    // 获取所有隧道
+    void foreachTunnels(const std::function<void(TunnelPtr&)>& handler);
 protected:
 
 private:

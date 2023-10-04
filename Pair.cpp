@@ -2,6 +2,8 @@
 // Created by Kris Allen on 2023/8/15.
 //
 
+#include <utility>
+
 #include "header/Pair.h"
 
 Pair::Pair(PairID pairID) {
@@ -20,31 +22,12 @@ Pair::~Pair() {
         delete []this->_data;
 }
 
-template<class T>
-std::shared_ptr<T> Pair::getContextPtr() {
-    std::lock_guard<std::mutex> locker(this->_locker);
-
-    return std::static_pointer_cast<T>(this->_ctxPtr);
-}
-
-void Pair::setContextPtr(const std::shared_ptr<void> &ctx) {
-    std::lock_guard<std::mutex> locker(this->_locker);
-
-    this->_ctxPtr = ctx;
-}
-
-void Pair::deleteContextPtr() {
-    std::lock_guard<std::mutex> locker(this->_locker);
-
-    this->_ctxPtr.reset();
-}
-
 PairID Pair::id() const {
     return this->_pairID;
 }
 
 SizeT Pair::send(const Byte *payload, SizeT len) {
-    std::lock_guard<std::mutex> locker(this->_locker);
+    std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     if(this->handleSend == nullptr)
         return 0;
@@ -59,7 +42,7 @@ SizeT Pair::send(const Byte *payload, SizeT len) {
 }
 
 HANDLER_ID Pair::addOnCloseHandler(onCloseCallback callback) {
-    return this->_onCloseCallbacks.add(callback);
+    return this->_onCloseCallbacks.add(std::move(callback));
 }
 
 void Pair::removeOnCloseHandler(HANDLER_ID handlerID) {

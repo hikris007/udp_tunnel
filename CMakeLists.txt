@@ -16,6 +16,7 @@ add_executable(udp_tunnel
         Server.cpp
         ServerPairManager.cpp
         TunnelFactory.cpp
+        TestTunnel.cpp
         main.cpp
 )
 add_executable(test test.cpp)

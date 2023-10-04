@@ -5,6 +5,7 @@
 #ifndef UDP_TUNNEL_CLIENT_H
 #define UDP_TUNNEL_CLIENT_H
 
+#include <chrono>
 #include "hv/EventLoop.h"
 #include "hv/UdpServer.h"
 #include "AppContext.h"
@@ -17,6 +18,7 @@ public:
     explicit Client(AppContext* config);
     Int run();
     Int shutdown();
+    SizeT getCurrentTs();
 
 private:
     Int init();

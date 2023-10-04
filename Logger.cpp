@@ -7,6 +7,7 @@
 Logger::Logger()  {
     this->_logger = spdlog::stdout_color_mt("console");
     spdlog::set_pattern("[%H:%M:%S.%e] [%^%L%$] [%s:%#] %v");
+    spdlog::set_level(spdlog::level::debug);
 }
 
 Logger &Logger::getInstance() {

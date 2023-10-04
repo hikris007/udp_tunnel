@@ -33,7 +33,9 @@ struct ServerConfig {
 };
 
 struct AppContext {
-    TransportProtocol transportProtocol;
+    Int64 writeTimeout = 1000*60;
+    Int64 receiveTimeout = 1000*60;
+    TransportProtocol transportProtocol = TransportProtocol ::Websocket;
     RunMode runMode = RunMode::CLIENT;
     ServerConfig* serverConfig = nullptr;
     ClientConfig* clientConfig = nullptr;

@@ -41,11 +41,25 @@ public:
         UNCERTAIN
     };
 
-    virtual ~Tunnel();
+    virtual ~Tunnel() = default;
 
-    template<class T> std::shared_ptr<T> getContextPtr();// 获取上下文智能指针
-    void setContextPtr(const std::shared_ptr<void>& ctx);// 设置上下文智能指针
-    void deleteContextPtr();// 删除上下文智能指针
+    // 获取上下文智能指针
+    template<class T> std::shared_ptr<T> getContextPtr(){
+        std::lock_guard<std::mutex> locker(this->_locker);
+        return std::static_pointer_cast<T>(this->_ctxPtr);
+    }
+
+    // 设置上下文智能指针
+    void setContextPtr(const std::shared_ptr<void>& ctx){
+        std::lock_guard<std::mutex> locker(this->_locker);
+        this->_ctxPtr = ctx;
+    }
+
+    // 删除上下文智能指针
+    void deleteContextPtr(){
+        std::lock_guard<std::mutex> locker(this->_locker);
+        this->_ctxPtr.reset();
+    }
 
     // 销毁隧道
     virtual Int destroy() = 0;
@@ -76,6 +90,10 @@ public:
 
     // 获取隧道的唯一 ID
     virtual TunnelID id() = 0;
+
+protected:
+    std::mutex _locker;
+    std::shared_ptr<void> _ctxPtr;
 };
 
 typedef std::shared_ptr<Tunnel> TunnelPtr;

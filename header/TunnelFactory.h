@@ -6,12 +6,11 @@
 #define UDP_TUNNEL_TUNNELFACTORY_H
 
 #include "Tunnel.h"
+#include "TestTunnel.h"
 
 class TunnelFactory {
 public:
-    static Tunnel* createTunnel(){
-        return nullptr;
-    }
+    static Tunnel* createTunnel();
 };
 
 

@@ -39,17 +39,17 @@ int main(int argc, char** argv) {
     serverFlag->excludes(clientFlag);
 
     Uint16 carryingCapacity = 4;
-    app.add_option("-cc, --carrying-capacity", carryingCapacity, "多路复用数量");
+    app.add_option("--cc, --carrying-capacity", carryingCapacity, "多路复用数量");
 
     std::string transportProtocolStr = "websocket";
-    app.add_option("-tp, --transport-protocol", transportProtocolStr, "协议")
+    app.add_option("--tp, --transport-protocol", transportProtocolStr, "协议")
         ->check(CLI::IsMember({"websocket"}));
 
     std::string endpoint;
-    app.add_option("-ep, --endpoint", endpoint, "远程地址")->required();
+    app.add_option("--ep, --endpoint", endpoint, "远程地址")->required();
 
     std::string listenDescription;
-    app.add_option("-ld, --listen-description", listenDescription, "监听描述")->required();
+    app.add_option("--ld, --listen-description", listenDescription, "监听描述")->required();
 
     CLI11_PARSE(app, argc, argv);
 
@@ -62,10 +62,9 @@ int main(int argc, char** argv) {
     if(serverMode){
         appContext.runMode = RunMode::SERVER;
 
-        appContext.clientConfig->transportProtocol = transportProtocol;
-        appContext.clientConfig->carryingCapacity = carryingCapacity;
-        appContext.clientConfig->listenDescription = listenDescription;
-        appContext.clientConfig->endpoint = endpoint;
+        appContext.serverConfig->transportProtocol = transportProtocol;
+        appContext.serverConfig->endpoint = endpoint;
+        appContext.serverConfig->listenDescription = listenDescription;
 
         // 业务
         serverPtr = std::make_shared<Server>(&appContext);
@@ -77,9 +76,10 @@ int main(int argc, char** argv) {
     if(clientMode){
         appContext.runMode = RunMode::CLIENT;
 
-        appContext.serverConfig->transportProtocol = transportProtocol;
-        appContext.serverConfig->endpoint = endpoint;
-        appContext.serverConfig->listenDescription = listenDescription;
+        appContext.clientConfig->transportProtocol = transportProtocol;
+        appContext.clientConfig->carryingCapacity = carryingCapacity;
+        appContext.clientConfig->listenDescription = listenDescription;
+        appContext.clientConfig->endpoint = endpoint;
 
         // 业务
         clientPtr = std::make_shared<Client>(&appContext);
@@ -87,6 +87,8 @@ int main(int argc, char** argv) {
 
         clientPtr->run();
     }
+
+    getchar();
 
     return 0;
 }
@@ -97,6 +99,7 @@ void handleSystemSignal(int signal){
             return;
 
         serverPtr->shutdown();
+        exit(0);
     }
 
     if(appContext.runMode == RunMode::CLIENT){
@@ -104,5 +107,6 @@ void handleSystemSignal(int signal){
             return;
 
         clientPtr->shutdown();
+        exit(0);
     }
 }

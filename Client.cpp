@@ -14,6 +14,47 @@ Client::Client(AppContext *config) {
     this->init();
 }
 
+SizeT Client::getCurrentTs() {
+    // 获取当前时间点
+    auto now = std::chrono::system_clock::now();
+
+    // 转换为自纪元以来的毫秒数
+    auto epoch_time = now.time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(epoch_time).count();
+
+    return millis;
+}
+
+void Client::garbageCollection() {
+    std::lock_guard<std::mutex> lockGuard(this->_locker);
+
+    auto pairHandler = [this](PairPtr& pair){
+        // 获取 Pair 上下文
+        ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+
+        // 当前时间戳(毫秒)
+        SizeT cts = this->getCurrentTs();
+
+        // 差
+        SizeT sinceLastWrite = cts - clientPairContext->_lastDataSentTime;
+        SizeT sinceLastReceived = cts - clientPairContext->_lastDataReceivedTime;
+
+        // 超时就关闭
+        if(sinceLastWrite > this->_appContext->writeTimeout || sinceLastReceived > this->_appContext->receiveTimeout){
+            pair->close();
+        }
+    };
+
+    auto handler = [&pairHandler](TunnelPtr& tunnel){
+        // 获取 Tunnel 上下文
+        ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+
+        // 遍历 Pair
+        clientTunnelContext->foreachPairs(pairHandler);
+    };
+    this->_clientPairManager->foreachTunnels(handler);
+}
+
 Int Client::init() {
     int fd = this->_udpServer->createsocket(8899);
     if(fd < 0){
@@ -25,6 +66,7 @@ Int Client::init() {
 
     // 当从本地接收到包就写入处理
     this->_udpServer->onMessage = [this](const hv::SocketChannelPtr& channel, hv::Buffer* buffer){
+        Logger::getInstance().getLogger()->debug("Receive data length: {} from {}.", buffer->size(), channel->peeraddr());
         this->_clientForwarder->onSend(
                 channel->peeraddr(),
                 static_cast<Byte*>(buffer->data()),
@@ -66,7 +108,7 @@ Int Client::run() {
     this->_udpServer->start();
 
     this->isRunning = true;
-    Logger::getInstance().getLogger()->warn("The client is running.");
+    Logger::getInstance().getLogger()->warn("The client is running on {}.", this->_appContext->clientConfig->listenDescription);
 
     return 0;
 }

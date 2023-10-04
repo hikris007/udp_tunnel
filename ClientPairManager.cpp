@@ -99,12 +99,12 @@ Int ClientPairManager::createTunnel() {
 }
 
 Int ClientPairManager::createPair(PairPtr& outputPair) {
-    std::lock_guard<std::mutex> lockGuard(this->_locker);
-
     // 如果没有可用的隧道就先创建
     if(this->_availableTunnelIDs.empty()){
         this->createTunnel();
     }
+
+    std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     // 获取第一个空闲隧道
     TunnelID tunnelID = this->_availableTunnelIDs.front();
@@ -122,7 +122,7 @@ Int ClientPairManager::createPair(PairPtr& outputPair) {
     pair->addOnCloseHandler(this->onPairCloseHandler);
 
     // Pair 上下文
-    ClientPairContextPtr clientPairContext = ClientPairContextPtr();
+    ClientPairContextPtr clientPairContext = std::make_shared<ClientPairContext>();
     clientPairContext->_tunnelID = tunnel->id();
     clientPairContext->_clientPairManagerPtr = shared_from_this();
     pair->setContextPtr(clientPairContext);
@@ -143,4 +143,12 @@ Int ClientPairManager::createPair(PairPtr& outputPair) {
     outputPair = std::move(pair);
 
     return 0;
+}
+
+void ClientPairManager::foreachTunnels(const std::function<void(TunnelPtr&)>& handler) {
+    std::lock_guard<std::mutex> lockGuard(this->_locker);
+
+    for(auto & _tunnel : this->_tunnels){
+        handler(_tunnel.second);
+    }
 }

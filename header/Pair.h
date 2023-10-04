@@ -25,9 +25,20 @@ public:
     explicit Pair(PairID pairID);
     ~Pair();
 
-    template<class T> std::shared_ptr<T> getContextPtr();// 获取上下文智能指针
-    void deleteContextPtr();// 删除上下文智能指针
-    void setContextPtr(const std::shared_ptr<void> &ctx);// 设置上下文智能指针
+    // 获取上下文智能指针
+    template<class T> std::shared_ptr<T> getContextPtr(){
+        return std::static_pointer_cast<T>(this->_ctxPtr);
+    }
+
+    // 删除上下文智能指针
+    void deleteContextPtr(){
+        this->_ctxPtr.reset();
+    }
+
+    // 设置上下文智能指针
+    void setContextPtr(const std::shared_ptr<void> &ctx){
+        this->_ctxPtr = ctx;
+    }
 
     // 获取映射唯一ID
     PairID id() const;
