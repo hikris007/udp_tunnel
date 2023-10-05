@@ -45,6 +45,7 @@ protected:
 
 private:
     // 因为不支持引用类的成员 所以要做一层转换
+    std::function<void(TunnelPtr tunnel, const Byte* payload, SizeT len)> onReceiveWrap = nullptr;
     std::function<SizeT(const PairPtr pair,const Byte* payload, SizeT len)> sendHandler = nullptr;
     std::function<void(const PairPtr pair)> onPairCloseHandler = nullptr;
 

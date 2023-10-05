@@ -10,7 +10,7 @@
 
 class Server {
 public:
-    Server(AppContext* appContext);
+    explicit Server(AppContext* appContext);
 
     Int run();
     Int shutdown();

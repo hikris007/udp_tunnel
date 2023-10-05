@@ -8,12 +8,13 @@
 #include "hv/EventLoop.h"
 
 #include "Tunnel.h"
+#include "UDPClientFactory.h"
 #include "Context.h"
 #include "Pair.h"
 
 class ServerPairManager {
 public:
-    explicit ServerPairManager(hv::EventLoopPtr eventLoop);
+    ServerPairManager(AppContext* appContext);
 
     void onTunnelOpen(TunnelPtr tunnelPtr);
     SizeT onSend(TunnelPtr tunnelPtr, const Byte* payload, SizeT length);
@@ -24,9 +25,10 @@ private:
 protected:
 private:
     // 包装
-    std::function<SizeT(const std::shared_ptr<Pair> pair,const Byte* payload, SizeT len)> handleSend = nullptr;
+    std::function<SizeT(const PairPtr pair,const Byte* payload, SizeT len)> handleSend = nullptr;
+    std::function<void(const PairPtr&, const Byte* payload, SizeT length)> onReceive = nullptr;
 
-    hv::EventLoopPtr _eventLoop = nullptr;
+    AppContext* _appContext = nullptr;
     std::unordered_map<TunnelID, TunnelPtr> _tunnels; // 传输层的列表
 };
 

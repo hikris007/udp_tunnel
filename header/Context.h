@@ -8,7 +8,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include "hv/UdpClient.h"
+#include "UDPClient.h"
 #include "netinet/in.h"
 #include "ClientPairManager.h"
 
@@ -26,7 +26,8 @@ private:
 
 class ServerPairContext {
 public:
-    std::shared_ptr<hv::UdpClient> udpClient = nullptr;
+    UDPClientPtr _udpClient = nullptr;
+    std::weak_ptr<Tunnel> _tunnel;
 };
 
 class ClientTunnelContext {

@@ -4,15 +4,26 @@
 
 #include "header/ServerPairManager.h"
 
-ServerPairManager::ServerPairManager(hv::EventLoopPtr eventLoop) {
-    this->_eventLoop = std::move(eventLoop);
+ServerPairManager::ServerPairManager(AppContext* appContext) {
+    this->_appContext = appContext;
 
-    this->handleSend = [this](const std::shared_ptr<Pair> pair,const Byte* payload, SizeT len){
+    this->onReceive = [](const PairPtr& pair, const Byte* payload, SizeT length){
         // 获取上下文
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
 
-        std::shared_ptr<hv::UdpClient> udpClient = serverPairContext->udpClient;
-        return udpClient->sendto(payload, len);
+        std::weak_ptr<Tunnel> tunnelPtr = serverPairContext->_tunnel;
+        if(tunnelPtr.expired())
+            return;
+
+        tunnelPtr.lock()->send(payload, length);
+    };
+
+    this->handleSend = [this](const PairPtr pair,const Byte* payload, SizeT len){
+        // 获取上下文
+        ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
+
+        UDPClientPtr udpClient = serverPairContext->_udpClient;
+        return udpClient->send(payload, len);
     };
 }
 
@@ -53,12 +64,13 @@ Int ServerPairManager::createPair(PairID pairID, PairPtr& pairPtr) {
     // 创建上下文 & 设置上下文
     ServerPairContextPtr serverPairContext = std::make_shared<ServerPairContext>();
 
-    std::shared_ptr<hv::UdpClient> udpClient = std::make_shared<hv::UdpClient>(this->_eventLoop);
+    UDPClient* udpClientPtr = UDPClientFactory::createUDPClient();
+    UDPClientPtr udpClient = std::shared_ptr<UDPClient>(udpClientPtr);
 
-    // TODO: 配置数据
-//    udpClient->createsocket();
+    // TODO: 注册事件
+//    udpClient->onReceive = this->onReceive;
 
-    serverPairContext->udpClient = udpClient;
+    serverPairContext->_udpClient = udpClient;
 
     pair->setContextPtr(serverPairContext);
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.22)
 project(udp_tunnel)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -18,8 +18,10 @@ add_executable(udp_tunnel
         TunnelFactory.cpp
         TestTunnel.cpp
         main.cpp
+        header/UDPClient.h
 )
-add_executable(test test.cpp)
+add_executable(test test.cpp
+        header/UDPClient.h)
 
 target_link_libraries(udp_tunnel PRIVATE hv_static)
 target_link_libraries(udp_tunnel PRIVATE spdlog::spdlog)

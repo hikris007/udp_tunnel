@@ -8,6 +8,7 @@
 #include <list>
 #include <functional>
 #include <mutex>
+#include "cstring"
 #include "Payload.h"
 #include "CallBackManager.h"
 

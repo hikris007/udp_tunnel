@@ -7,7 +7,7 @@
 Server::Server(AppContext* appContext) {
     this->_appContext = appContext;
 
-    this->_serverPairManager = std::make_shared<ServerPairManager>(this->_eventLoop);
+    this->_serverPairManager = std::make_shared<ServerPairManager>(this->_eventLoop, this->_appContext);
 }
 
 // TODO:

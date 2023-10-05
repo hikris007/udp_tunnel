@@ -9,6 +9,10 @@
 ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     this->_clientConfig = clientConfig;
 
+    this->onReceiveWrap = [this](TunnelPtr tunnel, const Byte* payload, SizeT len){
+        this->onReceive(tunnel, payload, len);
+    };
+
     this->sendHandler = [this](PairPtr pair,const Byte* payload, SizeT len){
         return this->onSend(pair, payload, len);
     };
@@ -80,6 +84,9 @@ Int ClientPairManager::createTunnel() {
     // 创建隧道 & 包装智能指针
     Tunnel *tunnel = TunnelFactory::createTunnel();
     TunnelPtr tunnelPtr = TunnelPtr(tunnel);
+
+    // TODO:注册事件
+    tunnelPtr->onReceive = this->onReceiveWrap;
 
     // 配置上下文 & 设置上下文
     ClientTunnelContextPtr clientTunnelContext = std::make_shared<ClientTunnelContext>(
