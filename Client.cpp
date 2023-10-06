@@ -58,7 +58,7 @@ void Client::garbageCollection() {
 Int Client::init() {
     int fd = this->_udpServer->createsocket(8899);
     if(fd < 0){
-        Logger::getInstance().getLogger()->error("Failed to create socket, fd: {}", fd);
+        LOGGER_ERROR("Failed to create socket, fd: {}", fd);
         return -1;
     }
 
@@ -66,7 +66,7 @@ Int Client::init() {
 
     // 当从本地接收到包就写入处理
     this->_udpServer->onMessage = [this](const hv::SocketChannelPtr& channel, hv::Buffer* buffer){
-        Logger::getInstance().getLogger()->debug("Receive data length: {} from {}.", buffer->size(), channel->peeraddr());
+        LOGGER_DEBUG("Receive data length: {} from {}.", buffer->size(), channel->peeraddr());
         this->_clientForwarder->onSend(
                 channel->peeraddr(),
                 static_cast<Byte*>(buffer->data()),
@@ -108,13 +108,13 @@ Int Client::run() {
     this->_udpServer->start();
 
     this->isRunning = true;
-    Logger::getInstance().getLogger()->warn("The client is running on {}.", this->_appContext->clientConfig->listenDescription);
+    LOGGER_WARN("The client is running on {}.", this->_appContext->clientConfig->listenDescription);
 
     return 0;
 }
 
 Int Client::shutdown() {
-    Logger::getInstance().getLogger()->debug("Client->shutdown()");
+    LOGGER_DEBUG("Client->shutdown()");
     if(!this->isRunning)
         return 0;
 
@@ -125,6 +125,7 @@ Int Client::shutdown() {
     this->_udpServer->stop();
 
     this->isRunning = false;
-    Logger::getInstance().getLogger()->warn("The client is shutdown.");
+    LOGGER_WARN("The client is shutdown.");
+
     return 0;
 }

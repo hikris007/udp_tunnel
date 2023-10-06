@@ -26,5 +26,10 @@ private:
     std::shared_ptr<spdlog::logger> _logger = nullptr;
 };
 
+#define LOGGER_DEBUG(...) SPDLOG_LOGGER_DEBUG(Logger::getInstance().getLogger(), __VA_ARGS__)
+#define LOGGER_INFO(...) SPDLOG_LOGGER_INFO(Logger::getInstance().getLogger(), __VA_ARGS__)
+#define LOGGER_WARN(...) SPDLOG_LOGGER_WARN(Logger::getInstance().getLogger(), __VA_ARGS__)
+#define LOGGER_ERROR(...) SPDLOG_LOGGER_ERROR(Logger::getInstance().getLogger(), __VA_ARGS__)
+
 
 #endif //UDP_TUNNEL_LOGGER_H
