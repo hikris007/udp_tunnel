@@ -5,8 +5,9 @@
 #include "header/LibhvUDPClient.h"
 
 Int LibhvUDPClient::init() {
-    // TODO:
+//    int lastSplitIndex = this->
     this->_udpClient->createsocket(7788);
+    this->_inited = true;
     return 0;
 }
 
@@ -17,7 +18,10 @@ Int LibhvUDPClient::close() {
 }
 
 LibhvUDPClient::State LibhvUDPClient::state() const {
-    return LibhvUDPClient::State::OPENED;
+    if(!this->_inited)
+        return State::INITIAL;
+
+    return this->_udpClient->channel->isOpened() ? State::OPENED : State::CLOSED;
 }
 
 std::string LibhvUDPClient::peerAddress() const {

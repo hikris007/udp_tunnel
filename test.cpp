@@ -43,6 +43,7 @@
 #include <boost/statechart/transition.hpp>
 #include "boost/statechart/custom_reaction.hpp"
 #include <iostream>
+#include <string>
 
 using namespace boost::statechart;
 namespace sc = boost::statechart;
@@ -142,6 +143,9 @@ int main()
     state_manager.process_event(CameraEventCloseing());
     current_state_code = state_manager.CurrentState();
     cout << current_state_code << endl;
-
+    std::string str = "1.1.1.1:8080:";
+//    int index = str.find_last_of(":");
+    int index = str.find(":");
+    std::cout << index << std::endl;
     return 0;
 }

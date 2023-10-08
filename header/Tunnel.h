@@ -9,6 +9,10 @@
 
 #define TUNNEL_TUNNEL_H
 
+class Tunnel;
+typedef std::shared_ptr<Tunnel> TunnelPtr;
+
+
 typedef Uint32 TunnelID;
 
 const TunnelID INVALID_TUNNEL_ID = 0;
@@ -45,7 +49,6 @@ public:
 
     // 获取上下文智能指针
     template<class T> std::shared_ptr<T> getContextPtr(){
-        std::lock_guard<std::mutex> locker(this->_locker);
         return std::static_pointer_cast<T>(this->_ctxPtr);
     }
 
@@ -57,7 +60,6 @@ public:
 
     // 删除上下文智能指针
     void deleteContextPtr(){
-        std::lock_guard<std::mutex> locker(this->_locker);
         this->_ctxPtr.reset();
     }
 
@@ -66,7 +68,7 @@ public:
 
     // 当隧道被销毁的回调
     // 传入当前隧道的指针
-    std::function<void(const std::shared_ptr<Tunnel> tunnel)> onDestroy = nullptr;
+    std::function<void(const TunnelPtr& tunnel)> onDestroy = nullptr;
 
     // 传入消息
     // 返回写入的字节数
@@ -74,13 +76,13 @@ public:
 
     // 当有消息的回调
     // 传入当前隧道和发送完成的消息
-    std::function<void(const std::shared_ptr<Tunnel> tunnel, const Byte* payload, SizeT length)> onReceive = nullptr;
+    std::function<void(const TunnelPtr& tunnel, const Byte* payload, SizeT length)> onReceive = nullptr;
 
     // 当隧道状态变更的回调
     // 传入当前隧道
     // 之前的的状态
     // 当前状态
-    std::function<void(const std::shared_ptr<Tunnel> tunnel, State from, State state)> onStateChange = nullptr;
+    std::function<void(const TunnelPtr tunnel, State from, State state)> onStateChange = nullptr;
 
     // 获取当前状态
     virtual State state() = 0;
@@ -96,6 +98,5 @@ protected:
     std::shared_ptr<void> _ctxPtr;
 };
 
-typedef std::shared_ptr<Tunnel> TunnelPtr;
 
 #endif //TUNNEL_TUNNEL_H

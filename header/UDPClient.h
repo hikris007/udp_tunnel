@@ -10,21 +10,25 @@
 #include <memory>
 #include "Byte.h"
 
+class UDPClient;
+typedef std::shared_ptr<UDPClient> UDPClientPtr;
+
 class UDPClient {
 public:
     enum State{
+        INITIAL,
         OPENED,
         CLOSED
     };
+
+    // INITIAL -> OPENED -> CLOSED
 
     virtual State state() const = 0;
     virtual std::string peerAddress() const = 0;
     virtual SizeT send(const Byte*, SizeT length) = 0;
     virtual Int close() = 0;
-    std::function<void(const Byte*,SizeT length)> onReceive = nullptr;
-    std::function<void(const std::shared_ptr<UDPClient>&, State from, State state)> onStateChange = nullptr;
+    std::function<void(const Byte* payload,SizeT length)> onReceive = nullptr;
 };
 
-typedef std::shared_ptr<UDPClient> UDPClientPtr;
 
 #endif //UDP_TUNNEL_UDPCLIENT_H
