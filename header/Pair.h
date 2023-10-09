@@ -13,11 +13,11 @@
 #include "CallBackManager.h"
 
 class Pair;
-
 typedef Uint32 PairID;
-typedef std::function<void(const std::shared_ptr<Pair> pair)> onCloseCallback;
-typedef std::function<SizeT(const std::shared_ptr<Pair> pair,const Byte* payload, SizeT len)> sendHandler;
-typedef std::function<void(const std::shared_ptr<Pair> pair,const Byte* payload, SizeT len)> onRecvCallback;
+typedef std::shared_ptr<Pair> PairPtr;
+typedef std::function<void(const PairPtr& pair)> onCloseCallback;
+typedef std::function<SizeT(const PairPtr& pair,const Byte* payload, SizeT len)> sendHandler;
+typedef std::function<void(const PairPtr& pair,const Byte* payload, SizeT len)> onRecvCallback;
 
 static const PairID INVALID_PAIR_ID = 0;
 
@@ -69,6 +69,5 @@ private:
     CallBackManager<const std::shared_ptr<Pair>> _onCloseCallbacks;
 };
 
-typedef std::shared_ptr<Pair> PairPtr;
 
 #endif //TUNNEL_PAIR_H
