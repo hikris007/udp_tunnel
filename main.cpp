@@ -7,8 +7,8 @@
 #include "CLI/CLI.hpp"
 
 // 自己的文件
-#include "header/Server.h"
-#include "header/Client.h"
+#include "module/server/Server.h"
+#include "module/client/Client.h"
 #include "header/AppContext.h"
 
 ServerConfig serverConfig;

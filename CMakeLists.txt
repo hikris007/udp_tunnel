@@ -12,22 +12,20 @@ include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 add_executable(udp_tunnel
-        Client.cpp
-        ClientForwarder.cpp
-        ClientPairManager.cpp
-        Logger.cpp
-        Pair.cpp
-        Server.cpp
-        ServerPairManager.cpp
-        TunnelFactory.cpp
-        TestTunnel.cpp
+        module/client/Client.cpp
+        module/clientForwarder/ClientForwarder.cpp
+        module/clientPairManager/ClientPairManager.cpp
+        module/logger/Logger.cpp
+        module/pair/Pair.cpp
+        module/server/Server.cpp
+        module/serverPairManager/ServerPairManager.cpp
+        module/tunnel/TunnelFactory.cpp
         main.cpp
-        header/UDPClient.h
-)
+        )
 add_executable(
         test
         test.cpp
-        Logger.cpp
+        module/logger/Logger.cpp
 )
 
 target_link_libraries(udp_tunnel PRIVATE hv_static)

@@ -7,38 +7,29 @@
 #include <string>
 #include "typedef.h"
 
-typedef enum {
-    Websocket,
-    DTLS
-} TransportProtocol;
+namespace omg {
+    // 配置项
+    struct ClientConfig {
+        TransportProtocol transportProtocol;
+        std::string listenDescription;
+        std::string endpoint;
+        Uint16 carryingCapacity;
+    };
 
-typedef enum {
-    SERVER,
-    CLIENT
-} RunMode;
+    // 配置项
+    struct ServerConfig {
+        TransportProtocol transportProtocol;
+        std::string listenDescription;
+        std::string endpoint;
+    };
 
-// 配置项
-struct ClientConfig {
-    TransportProtocol transportProtocol;
-    std::string listenDescription;
-    std::string endpoint;
-    Uint16 carryingCapacity;
-};
-
-// 配置项
-struct ServerConfig {
-    TransportProtocol transportProtocol;
-    std::string listenDescription;
-    std::string endpoint;
-};
-
-struct AppContext {
-    Int64 writeTimeout = 1000*60;
-    Int64 receiveTimeout = 1000*60;
-    TransportProtocol transportProtocol = TransportProtocol ::Websocket;
-    RunMode runMode = RunMode::CLIENT;
-    ServerConfig* serverConfig = nullptr;
-    ClientConfig* clientConfig = nullptr;
-};
-
+    struct AppContext {
+        Int64 writeTimeout = 1000*60;
+        Int64 receiveTimeout = 1000*60;
+        TransportProtocol transportProtocol = TransportProtocol ::Websocket;
+        RunMode runMode = RunMode::CLIENT;
+        ServerConfig* serverConfig = nullptr;
+        ClientConfig* clientConfig = nullptr;
+    };
+}
 #endif //UDP_TUNNEL_APPCONTEXT_H
