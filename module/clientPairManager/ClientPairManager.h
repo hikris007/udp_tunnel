@@ -9,11 +9,13 @@
 #include <unordered_map>
 #include <queue>
 
+#include "../logger/Logger.h"
 #include "../pair/Pair.h"
 #include "../tunnel/Tunnel.h"
 #include "../tunnel/TunnelFactory.h"
 #include "../../header/AppContext.h"
-#include "../logger/Logger.h"
+#include "../context/ClientTunnelContext.h"
+#include "../context/ClientPairContext.h"
 
 /**
  * Send: Client -> TunnelClient -> TunnelServer -> Server
@@ -25,14 +27,18 @@ namespace omg {
     public:
         explicit ClientPairManager(ClientConfig* clientConfig);
 
-        // 创建一个隧道
+        /*!
+         * 创建一个隧道
+         * @return 错误码
+         * 0 成功
+         */
         Int createTunnel();
 
         /*!
          * 创建一个 Pair
          * @param outputPair 以引用的方式返回结果
          * @return 状态码
-         * 0成功
+         * 0 成功
          */
         Int createPair(PairPtr& outputPair);
 
@@ -41,10 +47,26 @@ namespace omg {
     protected:
 
     private:
-        // 因为不支持引用类的成员 所以要做一层转换
-        std::function<void(TunnelPtr tunnel, const Byte* payload, SizeT len)> onReceiveWrap = nullptr;
-        std::function<SizeT(const PairPtr pair,const Byte* payload, SizeT len)> sendHandler = nullptr;
-        std::function<void(const PairPtr pair)> onPairCloseHandler = nullptr;
+        /*!
+         * 从隧道接收到的整个数据 包含 Pair 头
+         * 需要Manager处理后调用相关的Pair
+         */
+        std::function<void(const TunnelPtr& tunnel, const Byte* payload, SizeT length)> onReceive = nullptr;
+
+        /*!
+         * 需要告诉 Pair 怎么发送数据
+         */
+        std::function<SizeT(const PairPtr& pair,const Byte* payload, SizeT length)> pairSendHandler = nullptr;
+
+        /*！
+         * 当Pair关闭时的清理函数
+         */
+        std::function<void(const PairPtr& pair)> onPairCloseHandler = nullptr;
+
+        /*!
+         * 隧道关闭时的清理函数
+         */
+        std::function<void(const TunnelPtr& tunnel)> onTunnelDestroy = nullptr;
 
         ClientConfig* _clientConfig = nullptr; // 配置项
         std::mutex _locker; // 锁

@@ -14,16 +14,36 @@ namespace omg {
     public:
         explicit ClientForwarder(std::shared_ptr<ClientPairManager> clientPairManager);
 
-        // 接受到客户端数据
+        /*!
+         * 处理来自客户端的数据(线程安全)
+         * @param sourceAddress 源地址: ip:port
+         * @param payload 数据
+         * @param length 数据的长度
+         * @return 成功发送的长度
+         */
         SizeT onSend(const std::string& sourceAddress, Byte* payload, SizeT length);
 
-        // 接收到响应数据
-        std::function<SizeT(PairPtr pairPtr, Byte* payload, SizeT length)> onReceive = nullptr;
+        /*!
+         * 处理从服务端发回来的数据(线程安全)
+         * @param pair 接收到数据的 Pair
+         * @param payload 接收到的数据
+         * @param length 数据长度
+         */
+        std::function<SizeT(const PairPtr& pair, Byte* payload, SizeT length)> onReceive = nullptr;
     protected:
     private:
 
+        /*!
+         * 一个源地址 对应一个 Pair
+         */
         std::unordered_map<std::string, PairPtr> _sourceAddressMap;
+
+        /*!
+         * ClientPairManager 的引用
+         */
         std::shared_ptr<ClientPairManager> _clientPairManager = nullptr;
+
+        std::mutex _locker;
     };
 }
 

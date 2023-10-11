@@ -8,76 +8,68 @@
 omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     this->_clientConfig = clientConfig;
 
-    this->onReceiveWrap = [this](TunnelPtr tunnel, const Byte* payload, SizeT len){
-        this->onReceive(tunnel, payload, len);
+    this->onReceive = [this](const TunnelPtr& tunnel, const Byte* payload, SizeT length){
+        if(payload == nullptr || length <= (sizeof(PairID) + 1))
+            return;
+
+        // 获取 PairID
+        PairID pairID = INVALID_PAIR_ID;
+        memcpy(&pairID, payload, sizeof(PairID));
+
+        // 根据 PairID 找到 Pair
+        PairPtr pair = nullptr;
+        ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+        clientTunnelContext->getPair(pairID, pair);
+        if(pair == nullptr)
+            return;
+
+        if(!pair->onReceive)
+            return;
+
+        pair->onReceive(pair, payload+sizeof(PairID), len - sizeof(PairID));
     };
 
-    this->sendHandler = [this](PairPtr pair,const Byte* payload, SizeT len){
-        return this->onSend(pair, payload, len);
+    this->pairSendHandler = [this](const PairPtr& pair, const Byte* payload, SizeT length){
+        // 获取 Pair 上下文
+        ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+
+        // 从上下文中获取所属的隧道 ID && 获取隧道
+        TunnelID tunnelID = clientPairContext->_tunnelID;
+        TunnelPtr tunnel = nullptr;
+
+        auto iterator = this->_tunnels.find(tunnelID);
+        if(iterator == this->_tunnels.end())
+            return -1;
+
+        tunnel = iterator->second;
+
+        return tunnel->send(payload, len);
     };
 
-    this->onPairCloseHandler = [this](PairPtr pair){
-        this->onPairCloseHandler(pair);
+    this->onPairCloseHandler = [this](const PairPtr& pair){
+        // 获取上下文
+        ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+
+        // 从上下文中获取所属的隧道 ID && 获取隧道
+        TunnelID tunnelID = clientPairContext->_tunnelID;
+        TunnelPtr tunnel = nullptr;
+
+        auto iterator = this->_tunnels.find(tunnelID);
+        if(iterator == this->_tunnels.end())
+            return;
+
+        tunnel = iterator->second;
+
+        ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+        clientTunnelContext->removePair(pair);
+    };
+
+    this->onTunnelDestroy = [](const TunnelPtr& tunnel){
+
     };
 }
 
-void omg::ClientPairManager::onReceive(TunnelPtr tunnel, const Byte *payload, SizeT len) {
-    if(payload == nullptr || len <= (sizeof(PairID) + 1))
-        return;
-
-    // 获取 PairID
-    PairID pairID = INVALID_PAIR_ID;
-    memcpy(&pairID, payload, sizeof(PairID));
-
-    // 根据 PairID 找到 Pair
-    PairPtr pair = nullptr;
-    ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
-    clientTunnelContext->getPair(pairID, pair);
-    if(pair == nullptr)
-        return;
-
-    if(!pair->onReceive)
-        return;
-
-    pair->onReceive(pair, payload+sizeof(PairID), len - sizeof(PairID));
-}
-
-SizeT ClientPairManager::onSend(PairPtr pair, const Byte *payload, SizeT len) {
-    // 获取 Pair 上下文
-    ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
-
-    // 从上下文中获取所属的隧道 ID && 获取隧道
-    TunnelID tunnelID = clientPairContext->_tunnelID;
-    TunnelPtr tunnel = nullptr;
-
-    auto iterator = this->_tunnels.find(tunnelID);
-    if(iterator == this->_tunnels.end())
-        return -1;
-
-    tunnel = iterator->second;
-
-    return tunnel->send(payload, len);
-}
-
-void ClientPairManager::onPairClose(PairPtr pair) {
-    // 获取上下文
-    ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
-
-    // 从上下文中获取所属的隧道 ID && 获取隧道
-    TunnelID tunnelID = clientPairContext->_tunnelID;
-    TunnelPtr tunnel = nullptr;
-
-    auto iterator = this->_tunnels.find(tunnelID);
-    if(iterator == this->_tunnels.end())
-        return;
-
-    tunnel = iterator->second;
-
-    ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
-    clientTunnelContext->removePair(pair);
-}
-
-Int ClientPairManager::createTunnel() {
+omg::Int omg::ClientPairManager::createTunnel() {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     // 创建隧道 & 包装智能指针
@@ -85,7 +77,7 @@ Int ClientPairManager::createTunnel() {
     TunnelPtr tunnelPtr = TunnelPtr(tunnel);
 
     // TODO:注册事件
-    tunnelPtr->onReceive = this->onReceiveWrap;
+    tunnelPtr->onReceive = this->onReceive;
 
     // 配置上下文 & 设置上下文
     ClientTunnelContextPtr clientTunnelContext = std::make_shared<ClientTunnelContext>(

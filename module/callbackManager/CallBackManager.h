@@ -27,7 +27,7 @@ namespace omg {
 
             HANDLER_ID handlerID = this->_nextID++;
             typename Callbacks::iterator iterator = this->_callbacks.insert(this->_callbacks.end(), callback);
-            this->idToIterator.insert({handlerID, iterator});
+            this->_idToIterator.insert({handlerID, iterator});
 
             return handlerID;
         }
@@ -36,7 +36,7 @@ namespace omg {
             std::lock_guard<std::mutex> lockGuard(this->_locker);
 
             auto iterator = this->_idToIterator.find(handlerID);
-            if(iterator == this->idToIterator.end())
+            if(iterator == this->_idToIterator.end())
                 return;
 
             this->_callbacks.erase(iterator->second);
@@ -45,7 +45,7 @@ namespace omg {
 
         void trigger(Args ...args){
             for(auto iterator = this->_callbacks.rbegin(); iterator != this->_callbacks.rend(); iterator++){
-                *callback(args ...);
+                (*iterator)(args ...);
             }
         }
     private:

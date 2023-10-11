@@ -16,7 +16,7 @@
 
 namespace omg {
     class Pair;
-    typedef Uint32 PairID;
+    typedef Uint8 PairID;
     typedef std::shared_ptr<Pair> PairPtr;
     typedef std::function<void(const PairPtr& pair)> onCloseCallback;
     typedef std::function<SizeT(const PairPtr& pair,const Byte* payload, SizeT length)> SendHandler;

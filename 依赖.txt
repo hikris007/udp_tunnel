@@ -1,0 +1,5 @@
+client -> client -> server -> server : 此方向通称为send
+server -> server -> client -> client : 此方向通称receive
+
+
+Pair 持有shared_ptr<ClientPairContext>
