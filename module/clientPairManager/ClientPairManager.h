@@ -20,41 +20,40 @@
  * Recv: Client <- TunnelClient <- TunnelServer <- Server
  */
 
-class ClientPairManager : public std::enable_shared_from_this<ClientPairManager>{
-public:
-    explicit ClientPairManager(ClientConfig* clientConfig);
+namespace omg {
+    class ClientPairManager : public std::enable_shared_from_this<ClientPairManager>{
+    public:
+        explicit ClientPairManager(ClientConfig* clientConfig);
 
-    // 从隧道出来的整个 Pair
-    void onReceive(TunnelPtr tunnel, const Byte* payload, SizeT len);
+        // 创建一个隧道
+        Int createTunnel();
 
-    // Pair 调用这个函数发送数据
-    SizeT onSend(PairPtr pairPtr, const Byte* payload, SizeT len);
+        /*!
+         * 创建一个 Pair
+         * @param outputPair 以引用的方式返回结果
+         * @return 状态码
+         * 0成功
+         */
+        Int createPair(PairPtr& outputPair);
 
-    // Pair 关闭
-    void onPairClose(PairPtr pair);
+        // 获取所有隧道
+        void foreachTunnels(const std::function<void(TunnelPtr&)>& handler);
+    protected:
 
-    // 创建一个隧道
-    Int createTunnel();
+    private:
+        // 因为不支持引用类的成员 所以要做一层转换
+        std::function<void(TunnelPtr tunnel, const Byte* payload, SizeT len)> onReceiveWrap = nullptr;
+        std::function<SizeT(const PairPtr pair,const Byte* payload, SizeT len)> sendHandler = nullptr;
+        std::function<void(const PairPtr pair)> onPairCloseHandler = nullptr;
 
-    // 创建一个 Pair
-    Int createPair(PairPtr& outputPair);
+        ClientConfig* _clientConfig = nullptr; // 配置项
+        std::mutex _locker; // 锁
+        std::unordered_map<TunnelID, TunnelPtr> _tunnels; // 传输层的列表
+        std::unordered_map<TunnelID ,int> _tunnelPairCounter; // Key 是传输层的ID 值是空闲数量
+        std::queue<TunnelID> _availableTunnelIDs; // 存放可用的（有空闲位置的）底层传输层ID
+    };
+}
 
-    // 获取所有隧道
-    void foreachTunnels(const std::function<void(TunnelPtr&)>& handler);
-protected:
-
-private:
-    // 因为不支持引用类的成员 所以要做一层转换
-    std::function<void(TunnelPtr tunnel, const Byte* payload, SizeT len)> onReceiveWrap = nullptr;
-    std::function<SizeT(const PairPtr pair,const Byte* payload, SizeT len)> sendHandler = nullptr;
-    std::function<void(const PairPtr pair)> onPairCloseHandler = nullptr;
-
-    ClientConfig* _clientConfig = nullptr; // 配置项
-    std::mutex _locker; // 锁
-    std::unordered_map<TunnelID, TunnelPtr> _tunnels; // 传输层的列表
-    std::unordered_map<TunnelID ,int> _tunnelPairCounter; // Key 是传输层的ID 值是空闲数量
-    std::queue<TunnelID> _availableTunnelIDs; // 存放可用的（有空闲位置的）底层传输层ID
-};
 
 
 #endif //UDP_TUNNEL_CLIENTPAIRMANAGER_H

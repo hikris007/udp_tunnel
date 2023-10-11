@@ -25,6 +25,7 @@ add_executable(udp_tunnel
 add_executable(
         test
         test.cpp
+        module/pair/Pair.cpp
         module/logger/Logger.cpp
 )
 

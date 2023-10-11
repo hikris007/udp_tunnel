@@ -3,10 +3,9 @@
 //
 
 #include "ClientPairManager.h"
-#include "../context/Context.h"
 
 
-ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
+omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     this->_clientConfig = clientConfig;
 
     this->onReceiveWrap = [this](TunnelPtr tunnel, const Byte* payload, SizeT len){
@@ -22,7 +21,7 @@ ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     };
 }
 
-void ClientPairManager::onReceive(TunnelPtr tunnel, const Byte *payload, SizeT len) {
+void omg::ClientPairManager::onReceive(TunnelPtr tunnel, const Byte *payload, SizeT len) {
     if(payload == nullptr || len <= (sizeof(PairID) + 1))
         return;
 
@@ -105,7 +104,7 @@ Int ClientPairManager::createTunnel() {
     return 0;
 }
 
-Int ClientPairManager::createPair(PairPtr& outputPair) {
+omg::Int omg::ClientPairManager::createPair(PairPtr& outputPair) {
     // 如果没有可用的隧道就先创建
     if(this->_availableTunnelIDs.empty()){
         this->createTunnel();
@@ -152,7 +151,7 @@ Int ClientPairManager::createPair(PairPtr& outputPair) {
     return 0;
 }
 
-void ClientPairManager::foreachTunnels(const std::function<void(TunnelPtr&)>& handler) {
+void omg::ClientPairManager::foreachTunnels(const std::function<void(TunnelPtr&)>& handler) {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     for(auto & _tunnel : this->_tunnels){

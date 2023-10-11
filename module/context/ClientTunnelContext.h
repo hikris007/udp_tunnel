@@ -1,33 +1,9 @@
 //
-// Created by Kris Allen on 2023/9/18.
+// Created by Kris on 2023/10/11.
 //
 
-#ifndef UDP_TUNNEL_CONTEXT_H
-#define UDP_TUNNEL_CONTEXT_H
-
-#include <memory>
-#include <unordered_map>
-#include <unordered_set>
-#include "netinet/in.h"
-#include "../clientPairManager/ClientPairManager.h"
-
-class ClientPairContext {
-public:
-    SizeT _lastDataReceivedTime = 0;
-    SizeT _lastDataSentTime = 0;
-    std::shared_ptr<ClientPairManager> _clientPairManagerPtr = nullptr;
-    TunnelID _tunnelID = INVALID_TUNNEL_ID;
-    std::string _sourceAddress;
-    sockaddr* _sourceAddressSockAddr = nullptr;
-private:
-
-};
-
-class ServerPairContext {
-public:
-    void* _udpClient = nullptr;
-    std::weak_ptr<Tunnel> _tunnel;
-};
+#ifndef UDP_TUNNEL_CLIENTTUNNELCONTEXT_H
+#define UDP_TUNNEL_CLIENTTUNNELCONTEXT_H
 
 class ClientTunnelContext {
 
@@ -111,50 +87,6 @@ private:
     std::mutex _locker;
 };
 
-class ServerTunnelContext {
-public:
-    void addPair(PairPtr pair){
-        std::lock_guard<std::mutex> locker(this->_locker);
-        this->_pairs.insert({ pair->id(), pair });
-    }
-
-    void removePair(const PairPtr& pair){
-        std::lock_guard<std::mutex> locker(this->_locker);
-        auto iterator = this->_pairs.find(pair->id());
-        if(iterator == this->_pairs.end())
-            return;
-
-        this->_pairs.erase(iterator);
-    }
-
-    // 根据 PairID 获取 Pair
-    // 如果不存在 / 引用过期 都返回 nullptr
-    PairPtr getPair(PairID pairID){
-        if(pairID == INVALID_PAIR_ID)
-            return nullptr;
-
-        std::lock_guard<std::mutex> locker(this->_locker);
-
-        auto iterator = this->_pairs.find(pairID);
-        if (iterator == this->_pairs.end())
-            return nullptr;
-
-        if(iterator->second.expired())
-            return nullptr;
-
-        PairPtr pairPtr = iterator->second.lock();
-
-        return std::move(pairPtr);
-    }
-private:
-    std::mutex _locker;
-    std::unordered_map<PairID, std::weak_ptr<Pair>> _pairs; // 映射的集合
-};
-
-typedef std::shared_ptr<ClientPairContext> ClientPairContextPtr;
 typedef std::shared_ptr<ClientTunnelContext> ClientTunnelContextPtr;
 
-typedef std::shared_ptr<ServerPairContext> ServerPairContextPtr;
-typedef std::shared_ptr<ServerTunnelContext> ServerTunnelContextPtr;
-
-#endif //UDP_TUNNEL_CONTEXT_H
+#endif //UDP_TUNNEL_CLIENTTUNNELCONTEXT_H

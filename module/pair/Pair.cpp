@@ -1,12 +1,7 @@
-//
-// Created by Kris Allen on 2023/8/15.
-//
-
-#include <utility>
-
 #include "Pair.h"
 
-Pair::Pair(PairID pairID) {
+omg::Pair::Pair(PairID pairID) {
+    this->_isClosed = false;
     this->_pairID = pairID;
 
     // PairID 头大小 + UDP 包最大大小
@@ -17,40 +12,49 @@ Pair::Pair(PairID pairID) {
     memcpy(this->_data, &this->_pairID, sizeof(PairID));
 }
 
-Pair::~Pair() {
-    if(this->_data)
-        delete []this->_data;
+omg::Pair::~Pair() {
+    delete []this->_data;
+    this->_data = nullptr;
 }
 
-PairID Pair::id() const {
+omg::PairID omg::Pair::id() const {
     return this->_pairID;
 }
 
-SizeT Pair::send(const Byte *payload, SizeT len) {
+omg::SizeT omg::Pair::send(const Byte *payload, SizeT length) {
+    if(this->_isClosed)
+        return -1;
+
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
-    if(this->handleSend == nullptr)
-        return 0;
+    if(this->sendHandler == nullptr)
+        return -1;
 
     memcpy(
            this->_data + sizeof(PairID),
            payload,
-           len
+           length
     );
 
-    return this->handleSend(shared_from_this(), this->_data, sizeof(PairID) + len);
+    return this->sendHandler(shared_from_this(), this->_data, sizeof(PairID) + length);
 }
 
-HANDLER_ID Pair::addOnCloseHandler(onCloseCallback callback) {
+HANDLER_ID omg::Pair::addOnCloseHandler(onCloseCallback callback) {
     return this->_onCloseCallbacks.add(std::move(callback));
 }
 
-void Pair::removeOnCloseHandler(HANDLER_ID handlerID) {
+void omg::Pair::removeOnCloseHandler(HANDLER_ID handlerID) {
     this->_onCloseCallbacks.remove(handlerID);
 }
 
-Int Pair::close() {
-    std::lock_guard<std::mutex> locker(this->_locker);
+omg::Int omg::Pair::close() {
+    if(this->_isClosed)
+        return -1;
+
+    std::lock_guard<std::mutex> lockGuard(this->_locker);
+
     this->_onCloseCallbacks.trigger(shared_from_this());
+    this->_isClosed = true;
+
     return 0;
 }

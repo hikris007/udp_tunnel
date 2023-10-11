@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <mutex>
-#include "../../header/Byte.h"
+#include "../../header/typedef.h"
 #include "PayloadWrapper.h"
 
 class Payload : public PayloadWrapper {
