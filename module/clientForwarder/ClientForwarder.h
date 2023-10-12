@@ -21,7 +21,7 @@ namespace omg {
          * @param length 数据的长度
          * @return 成功发送的长度
          */
-        SizeT onSend(const std::string& sourceAddress, Byte* payload, SizeT length);
+        SizeT onSend(const std::string& sourceAddress, const Byte* payload, SizeT length);
 
         /*!
          * 处理从服务端发回来的数据(线程安全)
@@ -29,9 +29,13 @@ namespace omg {
          * @param payload 接收到的数据
          * @param length 数据长度
          */
-        std::function<SizeT(const PairPtr& pair, Byte* payload, SizeT length)> onReceive = nullptr;
+        std::function<SizeT(const PairPtr& pair, const Byte* payload, SizeT length)> onReceive = nullptr;
     protected:
     private:
+        /*!
+         * Pair 关闭的回调
+         */
+        std::function<void(const PairPtr& pair)> onPairClose = nullptr;
 
         /*!
          * 一个源地址 对应一个 Pair

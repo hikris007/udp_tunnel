@@ -43,7 +43,7 @@ namespace omg {
         Int createPair(PairPtr& outputPair);
 
         // 获取所有隧道
-        void foreachTunnels(const std::function<void(TunnelPtr&)>& handler);
+        void foreachTunnels(const std::function<void(const TunnelPtr&)>& handler);
     protected:
 
     private:

@@ -11,10 +11,10 @@
 #include "module/client/Client.h"
 #include "header/AppContext.h"
 
-ServerConfig serverConfig;
-ClientConfig clientConfig;
+omg::ServerConfig serverConfig;
+omg::ClientConfig clientConfig;
 
-AppContext appContext;
+omg::AppContext appContext;
 
 std::shared_ptr<Server> serverPtr = nullptr;
 std::shared_ptr<Client> clientPtr = nullptr;

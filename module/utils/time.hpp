@@ -7,6 +7,7 @@
 namespace omg {
     namespace utils {
         class Time {
+        public:
             static Uint64 getCurrentTs() {
                 auto now = std::chrono::system_clock::now();
 

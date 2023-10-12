@@ -143,7 +143,7 @@ omg::Int omg::ClientPairManager::createPair(PairPtr& outputPair) {
     return 0;
 }
 
-void omg::ClientPairManager::foreachTunnels(const std::function<void(TunnelPtr&)>& handler) {
+void omg::ClientPairManager::foreachTunnels(const std::function<void(const TunnelPtr&)>& handler) {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     for(auto & _tunnel : this->_tunnels){

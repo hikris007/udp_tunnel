@@ -11,22 +11,49 @@
 #include "../../header/AppContext.h"
 #include "../clientForwarder/ClientForwarder.h"
 #include "../logger/Logger.h"
-#include "../context/Context.h"
+#include "../utils/time.hpp"
+#include "../utils/socket.hpp"
 
 namespace omg {
     class Client {
     public:
         explicit Client(AppContext* config);
+        /*!
+         * 启动 线程安全
+         * @return 状态码
+         * 启动后会阻塞
+         */
         Int run();
+
+        /*!
+         * 关闭 线程安全
+         * @return 状态码
+         * 0为成功
+         */
         Int shutdown();
 
     private:
+        /*!
+         * 初始化 初始化套接字
+         * 注册发送的回调
+         * 注册接受的回调
+         * @return 状态码
+         * 0 成功
+         */
         Int init();
+
+        /*!
+         * GC清理函数 会清理所有长时间没有使用的 Pair
+         * 线程安全
+         */
         void garbageCollection();
 
     protected:
     private:
-        std::mutex _locker;
+        std::mutex _runMutex;
+        std::mutex _shutdownMutex;
+        std::mutex _gcMutex;
+
         bool isRunning = false;
 
         AppContext* _appContext = nullptr;
@@ -36,7 +63,6 @@ namespace omg {
 
         std::unique_ptr<ClientForwarder> _clientForwarder = nullptr;
         std::shared_ptr<ClientPairManager> _clientPairManager = nullptr;
-
 
         std::unique_ptr<hv::UdpServer> _udpServer = nullptr;
     };

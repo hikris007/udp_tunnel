@@ -1,46 +1,75 @@
 #include <iostream>
-#include "hv/UdpServer.h"
-#include "module/pair/Pair.h"
+#include <string>
+#include <regex>
 
-int main() {
-    omg::PairPtr pair = std::make_shared<omg::Pair>(10);
-    pair->sendHandler = [](const omg::PairPtr& pair,const omg::Byte* payload, omg::SizeT len){
-        std::cout << "写入：" << payload << std::endl;
-        return 0;
-    };
+enum ErrorCode {
+    SUCCESS = 0,
+    INVALID_FORMAT,
+    INVALID_IPV4_OCTET,
+    INVALID_PORT,
+    INVALID_IPV6
+};
 
-    hv::UdpServer udpServer;
-    udpServer.onMessage = [](const hv::SocketChannelPtr& channel, hv::Buffer* buffer){
-        channel->startConnect(1,"");
-    };
+int parseIPAddress(const std::string& address, std::string& ip, int& port) {
+    // 正则表达式匹配 IPv4 或 IPv6 地址
+    std::regex ipv4Regex(R"((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+))");
+    std::regex ipv6Regex(R"((\[[a-fA-F0-9:]+\]):(\d+))");
 
-    char data[] = {'H','e','y', ' ', 'K','r','i','s'};
+    std::smatch match;
 
-    pair->send(reinterpret_cast<const omg::Byte *>(data), 8);
-    return 0;
+    // 验证和解析 IPv4 地址
+    if (std::regex_match(address, match, ipv4Regex)) {
+        ip = match[1].str();
+        std::string portStr = match[2].str();
+        port = std::stoi(portStr);
+
+        if (port < 0 || port > 65535) {
+            return INVALID_PORT;
+        }
+
+        std::regex octetRegex(R"(\d{1,3})");
+        auto octetsBegin = std::sregex_iterator(ip.begin(), ip.end(), octetRegex);
+        auto octetsEnd = std::sregex_iterator();
+
+        for (std::sregex_iterator i = octetsBegin; i != octetsEnd; ++i) {
+            int octet = std::stoi(i->str());
+            if (octet < 0 || octet > 255) {
+                return INVALID_IPV4_OCTET;
+            }
+        }
+    } else if (std::regex_match(address, match, ipv6Regex)) {
+        ip = match[1].str().substr(1, match[1].str().size() - 2); // 去除 []
+        std::string portStr = match[2].str();
+        port = std::stoi(portStr);
+
+        if (port < 0 || port > 65535) {
+            return INVALID_PORT;
+        }
+    } else {
+        return INVALID_FORMAT;
+    }
+
+    return SUCCESS;
 }
 
-//#include <iostream>
-//#include <list>
-//#include "module/callbackManager/CallBackManager.h"
-//
-//int main() {
-//    omg::CallBackManager<int> callBackManager;
-//
-//    callBackManager.add([](int i){
-//        std::cout << "N 1" << std::endl;
-//    });
-//
-//    HANDLER_ID id = callBackManager.add([](int i){
-//        std::cout << "N 2" << std::endl;
-//    });
-//
-//    callBackManager.add([](int i){
-//        std::cout << "N 3" << std::endl;
-//    });
-//
-//    callBackManager.remove(id);
-//
-//    callBackManager.trigger(1);
-//    return 0;
-//}
+int main() {
+    std::string ip;
+    int port;
+
+    // 测试用例
+    int errorCode1 = parseIPAddress("392.168.1.1:8080", ip, port);
+    if (errorCode1 == SUCCESS) {
+        std::cout << "IP: " << ip << " Port: " << port << std::endl;
+    } else {
+        std::cerr << "Error code: " << errorCode1 << std::endl;
+    }
+
+    int errorCode2 = parseIPAddress("[2001:0db8:85a3:0000:0000:8a2e:0370:7334]:80", ip, port);
+    if (errorCode2 == SUCCESS) {
+        std::cout << "IP: " << ip << " Port: " << port << std::endl;
+    } else {
+        std::cerr << "Error code: " << errorCode2 << std::endl;
+    }
+
+    return 0;
+}

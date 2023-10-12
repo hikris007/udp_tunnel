@@ -1,5 +1,17 @@
 client -> client -> server -> server : 此方向通称为send
 server -> server -> client -> client : 此方向通称receive
 
+Client 持有:
+    std::make_shared<hv::EventLoop>()
 
-Pair 持有shared_ptr<ClientPairContext>
+    std::make_shared<ClientPairManager>:
+        std::unordered_map<TunnelID, TunnelPtr>
+
+    std::unique_ptr<ClientForwarder>:
+        std::make_shared<ClientPairManager>
+
+        std::unordered_map<std::string, PairPtr>:
+            shared_ptr<ClientPairContext>:
+                shared_ptr<Tunnel>
+
+    std::unique_ptr<hv::UdpServer>

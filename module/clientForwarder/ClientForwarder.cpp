@@ -6,9 +6,21 @@
 
 omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientPairManager) {
     this->_clientPairManager = std::move(clientPairManager);
+
+    this->onPairClose = [this] (const PairPtr& pair){
+        std::lock_guard<std::mutex> lockGuard(this->_locker);
+
+        ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+
+        auto iterator = this->_sourceAddressMap.find(clientPairContext->_sourceAddress);
+        if(iterator == this->_sourceAddressMap.end())
+            return;
+
+        this->_sourceAddressMap.erase(iterator);
+    };
 }
 
-omg::SizeT omg::ClientForwarder::onSend(const std::string& sourceAddress, Byte *payload, SizeT length) {
+omg::SizeT omg::ClientForwarder::onSend(const std::string& sourceAddress, const Byte *payload, SizeT length) {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     // 获取源地址对应的 Pair
@@ -16,7 +28,11 @@ omg::SizeT omg::ClientForwarder::onSend(const std::string& sourceAddress, Byte *
     PairPtr pair = nullptr;
     auto iterator = this->_sourceAddressMap.find(sourceAddress);
     if(iterator == this->_sourceAddressMap.end()){
+        // 添加 Pair
         this->_clientPairManager->createPair(pair);
+
+        // 注册关闭回调
+        pair->addOnCloseHandler(this->onPairClose);
     }else{
         pair = iterator->second;
     }

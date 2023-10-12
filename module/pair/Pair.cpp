@@ -22,10 +22,10 @@ omg::PairID omg::Pair::id() const {
 }
 
 omg::SizeT omg::Pair::send(const Byte *payload, SizeT length) {
+    std::lock_guard<std::mutex> lockGuard(this->_sendMutex);
+
     if(this->_isClosed)
         return -1;
-
-    std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     if(this->sendHandler == nullptr)
         return -1;
@@ -48,10 +48,9 @@ void omg::Pair::removeOnCloseHandler(HANDLER_ID handlerID) {
 }
 
 omg::Int omg::Pair::close() {
+    std::lock_guard<std::mutex> lockGuard(this->_closeMutex);
     if(this->_isClosed)
         return -1;
-
-    std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     this->_onCloseCallbacks.trigger(shared_from_this());
     this->_isClosed = true;

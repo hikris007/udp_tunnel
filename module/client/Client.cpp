@@ -10,19 +10,17 @@ omg::Client::Client(AppContext *config) {
     this->_clientPairManager = std::make_shared<ClientPairManager>(this->_appContext->clientConfig);
     this->_clientForwarder = std::unique_ptr<ClientForwarder>(new ClientForwarder(this->_clientPairManager));
     this->_udpServer = std::unique_ptr<hv::UdpServer>(new hv::UdpServer(this->_eventLoop));
-
-    this->init();
 }
 
 void omg::Client::garbageCollection() {
-    std::lock_guard<std::mutex> lockGuard(this->_locker);
+    std::lock_guard<std::mutex> lockGuard(this->_gcMutex);
 
     auto pairHandler = [this](PairPtr& pair){
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
         // 当前时间戳(毫秒)
-        SizeT cts = this->getCurrentTs();
+        SizeT cts = omg::utils::Time::getCurrentTs();
 
         // 差
         SizeT sinceLastWrite = cts - clientPairContext->_lastDataSentTime;
@@ -34,37 +32,55 @@ void omg::Client::garbageCollection() {
         }
     };
 
-    auto handler = [&pairHandler](TunnelPtr& tunnel){
+    auto handler = [&pairHandler](const TunnelPtr& tunnel){
         // 获取 Tunnel 上下文
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
 
         // 遍历 Pair
         clientTunnelContext->foreachPairs(pairHandler);
     };
+
     this->_clientPairManager->foreachTunnels(handler);
 }
 
 omg::Int omg::Client::init() {
-    int fd = this->_udpServer->createsocket(8899);
+    // ------- 创建套接字 -------
+
+    // 解析地址
+    std::string ip;
+    int port;
+
+    int errCode = utils::Socket::parseIPAddress(
+            this->_appContext->clientConfig->listenDescription,
+            ip,
+            port
+    );
+    if(errCode != utils::Socket::ParseErrorCode::SUCCESS){
+        LOGGER_ERROR("Failed to parse listen listen description, error code: {}", errCode);
+        return -1;
+    }
+
+    int fd = this->_udpServer->createsocket(port, ip.c_str());
     if(fd < 0){
         LOGGER_ERROR("Failed to create socket, fd: {}", fd);
         return -1;
     }
 
-    // 注册事件
+    // ------- 注册事件 -------
 
     // 当从本地接收到包就写入处理
     this->_udpServer->onMessage = [this](const hv::SocketChannelPtr& channel, hv::Buffer* buffer){
         LOGGER_DEBUG("Receive data length: {} from {}.", buffer->size(), channel->peeraddr());
+
         this->_clientForwarder->onSend(
                 channel->peeraddr(),
-                static_cast<Byte*>(buffer->data()),
+                static_cast<const Byte*>(buffer->data()),
                 buffer->size()
         );
     };
 
     // 收到响应包就写回去
-    this->_clientForwarder->onReceive = [this](PairPtr pairPtr, Byte* payload, SizeT length){
+    this->_clientForwarder->onReceive = [this](const PairPtr& pairPtr, Byte* payload, SizeT length){
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pairPtr->getContextPtr<ClientPairContext>();
 
@@ -83,10 +99,17 @@ omg::Int omg::Client::init() {
 }
 
 omg::Int omg::Client::run() {
-    std::lock_guard<std::mutex> locker(this->_locker);
-
     if(this->isRunning)
         return 0;
+
+    std::lock_guard<std::mutex> locker(this->_runMutex);
+
+    // 初始化
+    Int errorCode = this->init();
+    if(errorCode != 0){
+        LOGGER_ERROR("Failed to init, error code: {}", errorCode);
+        return -1;
+    }
 
     // 垃圾回收
     this->gcTimerID = this->_eventLoop->setInterval(5000, [this](hv::TimerID timerID){
@@ -103,18 +126,22 @@ omg::Int omg::Client::run() {
 }
 
 omg::Int omg::Client::shutdown() {
-    LOGGER_DEBUG("Client->shutdown()");
     if(!this->isRunning)
         return 0;
 
+    std::lock_guard<std::mutex> lockGuard(this->_shutdownMutex);
+
+    // 停止 GC 清理
     if(this->gcTimerID != INVALID_TIMER_ID){
         this->_eventLoop->killTimer(this->gcTimerID);
+        this->gcTimerID = INVALID_TIMER_ID;
     }
 
+    // 停止接收数据
     this->_udpServer->stop();
 
     this->isRunning = false;
-    LOGGER_WARN("The client is shutdown.");
 
+    LOGGER_WARN("The client is shutdown.");
     return 0;
 }

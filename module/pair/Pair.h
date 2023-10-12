@@ -36,6 +36,10 @@ namespace omg {
 
     class Pair : public std::enable_shared_from_this<Pair>{
     public:
+        // 删除复制和赋值操作
+        Pair(const Pair&) = delete;
+        Pair& operator=(const Pair&) = delete;
+
         /*!
          * 构造函数
          * @param pairID
@@ -120,9 +124,10 @@ namespace omg {
         std::shared_ptr<void> _ctxPtr;
 
         // 锁
-        std::mutex _locker;
+        std::mutex _closeMutex;
+        std::mutex _sendMutex;
 
-        // 关闭回调管理器
+        // 关闭回调管理器 线程安全
         CallBackManager<const std::shared_ptr<Pair>> _onCloseCallbacks;
     };
 }
