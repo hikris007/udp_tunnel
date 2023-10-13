@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <regex>
+#include "hv/UdpServer.h"
 
 enum ErrorCode {
     SUCCESS = 0,
@@ -71,5 +72,6 @@ int main() {
         std::cerr << "Error code: " << errorCode2 << std::endl;
     }
 
+    hv::UdpServer udpServer;
     return 0;
 }

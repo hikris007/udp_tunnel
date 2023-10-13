@@ -28,7 +28,7 @@ omg::SizeT omg::ClientForwarder::onSend(const std::string& sourceAddress, const 
     PairPtr pair = nullptr;
     auto iterator = this->_sourceAddressMap.find(sourceAddress);
     if(iterator == this->_sourceAddressMap.end()){
-        // 添加 Pair
+        // 创建 Pair
         this->_clientPairManager->createPair(pair);
 
         // 注册关闭回调
@@ -43,7 +43,7 @@ omg::SizeT omg::ClientForwarder::onSend(const std::string& sourceAddress, const 
     // 如果是新添加的 Pair 则设置一些信息
     if(iterator == this->_sourceAddressMap.end()){
         clientPairContext->_sourceAddress = sourceAddress;
-        clientPairContext->_sourceAddressSockAddr = nullptr;
+        clientPairContext->_sourceAddressSockAddrStorage;// TODO:
 
         this->_sourceAddressMap.insert({ sourceAddress, pair });
         LOGGER_INFO("New pair:{} <----> {}", pair->id(), sourceAddress);
