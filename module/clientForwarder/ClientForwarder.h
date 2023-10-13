@@ -7,7 +7,9 @@
 
 #include <unordered_map>
 #include <string>
+#include "hv/hsocket.h"
 #include "../clientPairManager/ClientPairManager.h"
+#include "../utils/socket.hpp"
 
 namespace omg {
     class ClientForwarder {
@@ -36,6 +38,11 @@ namespace omg {
          * Pair 关闭的回调
          */
         std::function<void(const PairPtr& pair)> onPairClose = nullptr;
+
+        /*!
+         * 需要告诉 Pair 怎么发送数据
+         */
+        std::function<SizeT(const PairPtr& pair,const Byte* payload, SizeT length)> pairSendHandler = nullptr;
 
         /*!
          * 一个源地址 对应一个 Pair

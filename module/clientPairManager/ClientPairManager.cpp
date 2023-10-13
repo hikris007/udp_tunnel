@@ -8,8 +8,14 @@
 omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     this->_clientConfig = clientConfig;
 
+    /*!
+     * 当从隧道拿到数据后，应该派发
+     */
     this->onReceive = [this](const TunnelPtr& tunnel, const Byte* payload, SizeT length){
-        if(payload == nullptr || length <= (sizeof(PairID) + 1))
+        // 数据是：Header + Payload
+        // 如果长度小于等于 sizeof(Header) 就返回
+        // 因为没有数据没有任何意义
+        if(payload == nullptr || length < (sizeof(PairID) + 1))
             return;
 
         // 获取 PairID
@@ -17,55 +23,46 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         memcpy(&pairID, payload, sizeof(PairID));
 
         // 根据 PairID 找到 Pair
+        // 如果找不到 Pair 则丢弃
         PairPtr pair = nullptr;
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
         clientTunnelContext->getPair(pairID, pair);
         if(pair == nullptr)
             return;
 
+        // 如果没有接收处理函数也丢弃
         if(!pair->onReceive)
             return;
 
-        pair->onReceive(pair, payload+sizeof(PairID), len - sizeof(PairID));
+        pair->onReceive(pair, payload+sizeof(PairID), length - sizeof(PairID));
     };
 
-    this->pairSendHandler = [this](const PairPtr& pair, const Byte* payload, SizeT length){
-        // 获取 Pair 上下文
-        ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
-
-        // 从上下文中获取所属的隧道 ID && 获取隧道
-        TunnelID tunnelID = clientPairContext->_tunnelID;
-        TunnelPtr tunnel = nullptr;
-
-        auto iterator = this->_tunnels.find(tunnelID);
-        if(iterator == this->_tunnels.end())
-            return -1;
-
-        tunnel = iterator->second;
-
-        return tunnel->send(payload, len);
-    };
-
+    // 当 Pair 关闭怎么处理
     this->onPairCloseHandler = [this](const PairPtr& pair){
         // 获取上下文
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
-        // 从上下文中获取所属的隧道 ID && 获取隧道
-        TunnelID tunnelID = clientPairContext->_tunnelID;
-        TunnelPtr tunnel = nullptr;
-
-        auto iterator = this->_tunnels.find(tunnelID);
-        if(iterator == this->_tunnels.end())
-            return;
-
-        tunnel = iterator->second;
-
+        // 从上下文中获取所属的隧道 & 上下文
+        TunnelPtr tunnel = clientPairContext->tunnel;;
+        if(tunnel == nullptr) return (SizeT)-1; // TODO:
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+
+        // 解除关联 & 释放 PairID
+        clientTunnelContext->putSeatNumber(pair->id());
         clientTunnelContext->removePair(pair);
     };
 
+    /*!
+     * 当隧道关闭的时候处理函数
+     */
     this->onTunnelDestroy = [](const TunnelPtr& tunnel){
+        // 获取上下文
+        ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
 
+        // 遍历关闭 Pair
+        clientTunnelContext->foreachPairs([](const PairPtr& pair){
+            pair->close();
+        });
     };
 }
 
@@ -104,7 +101,7 @@ omg::Int omg::ClientPairManager::createPair(PairPtr& outputPair) {
 
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
-    // 获取第一个空闲隧道
+    // 获取第一个空闲隧道 & 上下文
     TunnelID tunnelID = this->_availableTunnelIDs.front();
     auto iterator = this->_tunnels.find(tunnelID);
 
@@ -112,17 +109,16 @@ omg::Int omg::ClientPairManager::createPair(PairPtr& outputPair) {
     ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
 
     // 创建 Pair
-    PairID pairID = clientTunnelContext->get();
+    PairID pairID = clientTunnelContext->takeSeatNumber();
     PairPtr pair = std::make_shared<Pair>(pairID);
 
     // 注册回调
-    pair->handleSend = this->sendHandler;
-    pair->addOnCloseHandler(this->onPairCloseHandler);
+    pair->sendHandler = this->pairSendHandler; // 怎么发送
+    pair->addOnCloseHandler(this->onPairCloseHandler); // 关闭的时候做什么
 
-    // Pair 上下文
+    // 配置 Pair 上下文
     ClientPairContextPtr clientPairContext = std::make_shared<ClientPairContext>();
-    clientPairContext->_tunnelID = tunnel->id();
-    clientPairContext->_clientPairManagerPtr = shared_from_this();
+    clientPairContext->tunnel = tunnel;
     pair->setContextPtr(clientPairContext);
 
     // 关联隧道

@@ -25,7 +25,7 @@ namespace omg {
          * 因为发送数据需要这种格式 所以多写一个这种格式的源地址
          */
         std::string _sourceAddress; // 源地址 格式: ip:port
-        sockaddr_storage _sourceAddressSockAddrStorage;
+        sockaddr_u _sourceAddressSockAddr;
 
         TunnelPtr tunnel = nullptr; // Pair 所属的 隧道
     private:

@@ -53,11 +53,6 @@ namespace omg {
          */
         std::function<void(const TunnelPtr& tunnel, const Byte* payload, SizeT length)> onReceive = nullptr;
 
-        /*!
-         * 需要告诉 Pair 怎么发送数据
-         */
-        std::function<SizeT(const PairPtr& pair,const Byte* payload, SizeT length)> pairSendHandler = nullptr;
-
         /*！
          * 当Pair关闭时的清理函数
          */
