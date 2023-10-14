@@ -16,8 +16,8 @@ omg::ClientConfig clientConfig;
 
 omg::AppContext appContext;
 
-std::shared_ptr<Server> serverPtr = nullptr;
-std::shared_ptr<Client> clientPtr = nullptr;
+std::shared_ptr<omg::Server> serverPtr = nullptr;
+std::shared_ptr<omg::Client> clientPtr = nullptr;
 
 void handleSystemSignal(int signal);
 
@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     clientFlag->excludes(serverFlag);
     serverFlag->excludes(clientFlag);
 
-    Uint16 carryingCapacity = 4;
+    omg::Uint16 carryingCapacity = 4;
     app.add_option("--cc, --carrying-capacity", carryingCapacity, "多路复用数量");
 
     std::string transportProtocolStr = "websocket";
@@ -53,28 +53,27 @@ int main(int argc, char** argv) {
 
     CLI11_PARSE(app, argc, argv);
 
-    std::unordered_map<std::string, TransportProtocol> transportProtocolMap;
-    transportProtocolMap.insert({ "websocket", TransportProtocol ::Websocket});
-    transportProtocolMap.insert({ "dtls", TransportProtocol ::DTLS});
+    std::unordered_map<std::string, omg::TransportProtocol> transportProtocolMap;
+    transportProtocolMap.insert({ "websocket", omg::TransportProtocol ::Websocket});
 
-    TransportProtocol transportProtocol = transportProtocolMap[transportProtocolStr];
+    omg::TransportProtocol transportProtocol = transportProtocolMap[transportProtocolStr];
 
     if(serverMode){
-        appContext.runMode = RunMode::SERVER;
+        appContext.runMode = omg::RunMode::SERVER;
 
         appContext.serverConfig->transportProtocol = transportProtocol;
         appContext.serverConfig->endpoint = endpoint;
         appContext.serverConfig->listenDescription = listenDescription;
 
         // 业务
-        serverPtr = std::make_shared<Server>(&appContext);
+        serverPtr = std::make_shared<omg::Server>(&appContext);
         std::signal(SIGINT, handleSystemSignal);
 
         serverPtr->run();
     }
 
     if(clientMode){
-        appContext.runMode = RunMode::CLIENT;
+        appContext.runMode = omg::RunMode::CLIENT;
 
         appContext.clientConfig->transportProtocol = transportProtocol;
         appContext.clientConfig->carryingCapacity = carryingCapacity;
@@ -82,7 +81,7 @@ int main(int argc, char** argv) {
         appContext.clientConfig->endpoint = endpoint;
 
         // 业务
-        clientPtr = std::make_shared<Client>(&appContext);
+        clientPtr = std::make_shared<omg::Client>(&appContext);
         std::signal(SIGINT, handleSystemSignal);
 
         clientPtr->run();
@@ -94,7 +93,7 @@ int main(int argc, char** argv) {
 }
 
 void handleSystemSignal(int signal){
-    if(appContext.runMode == RunMode::SERVER){
+    if(appContext.runMode == omg::RunMode::SERVER){
         if(serverPtr == nullptr)
             return;
 
@@ -102,7 +101,7 @@ void handleSystemSignal(int signal){
         exit(0);
     }
 
-    if(appContext.runMode == RunMode::CLIENT){
+    if(appContext.runMode == omg::RunMode::CLIENT){
         if(clientPtr == nullptr)
             return;
 

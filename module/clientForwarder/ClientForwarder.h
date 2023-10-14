@@ -39,10 +39,6 @@ namespace omg {
          */
         std::function<void(const PairPtr& pair)> onPairClose = nullptr;
 
-        /*!
-         * 需要告诉 Pair 怎么发送数据
-         */
-        std::function<SizeT(const PairPtr& pair,const Byte* payload, SizeT length)> pairSendHandler = nullptr;
 
         /*!
          * 一个源地址 对应一个 Pair

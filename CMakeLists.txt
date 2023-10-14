@@ -27,6 +27,7 @@ add_executable(
         test.cpp
         module/pair/Pair.cpp
         module/logger/Logger.cpp
+        module/tunnel/LibhvWsClientTunnel/LibhvWsClientTunnel.cpp
 )
 
 target_link_libraries(udp_tunnel PRIVATE hv_static)

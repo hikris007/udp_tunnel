@@ -5,24 +5,27 @@
 #ifndef UDP_TUNNEL_PAYLOADWRAPPER_H
 #define UDP_TUNNEL_PAYLOADWRAPPER_H
 
-#include "../../header/Byte.h"
+#include "../../header/typedef.h"
 
-class PayloadWrapper {
-public:
-    PayloadWrapper();
+namespace omg {
 
-    PayloadWrapper(const Byte* data, SizeT length);
+    class PayloadWrapper {
+    public:
+        PayloadWrapper();
 
-    // 获取数据的指针
-    const Byte *data() const;
+        PayloadWrapper(const Byte* data, SizeT length);
 
-    // 获取当前消息的长度
-    SizeT length() const;
+        // 获取数据的指针
+        const Byte *data() const;
 
-protected:
-    const Byte* _dataPtr = nullptr;
-    SizeT _length = 0;
-};
+        // 获取当前消息的长度
+        SizeT length() const;
+
+    protected:
+        const Byte* _dataPtr = nullptr;
+        SizeT _length = 0;
+    };
+}
 
 
 #endif //UDP_TUNNEL_PAYLOADWRAPPER_H

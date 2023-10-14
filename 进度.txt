@@ -3,3 +3,4 @@ CallbackManager 模块没发现问题 2023.10.11
 Logger 模块没发现问题 2023.10.12
 Client 模块没发现问题 2023.10.12
 ClientForward 模块没发现问题 2023.10.13
+ClientPairManager 模块没发现问题 2023.10.14

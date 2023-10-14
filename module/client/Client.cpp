@@ -50,7 +50,7 @@ omg::Int omg::Client::init() {
     std::string ip;
     int port;
 
-    int errCode = utils::Socket::parseIPAddress(
+    int errCode = utils::Socket::splitIPAddress(
             this->_appContext->clientConfig->listenDescription,
             ip,
             port
@@ -80,18 +80,18 @@ omg::Int omg::Client::init() {
     };
 
     // 收到响应包就写回去
-    this->_clientForwarder->onReceive = [this](const PairPtr& pairPtr, Byte* payload, SizeT length){
+    this->_clientForwarder->onReceive = [this](const PairPtr& pairPtr, const Byte* payload, SizeT length){
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pairPtr->getContextPtr<ClientPairContext>();
 
         // 从上下文中获取源地址
-        sockaddr* sourceAddress = clientPairContext->_sourceAddressSockAddr;
+        sockaddr_u* sourceAddress = &clientPairContext->_sourceAddressSockAddr;
 
         // 写回去
         return this->_udpServer->sendto(
                 payload,
                 length,
-                sourceAddress
+                reinterpret_cast<sockaddr *>(sourceAddress)
         );
     };
 

@@ -4,19 +4,19 @@
 
 #include "PayloadWrapper.h"
 
-PayloadWrapper::PayloadWrapper(){
+omg::PayloadWrapper::PayloadWrapper(){
 
 }
 
-PayloadWrapper::PayloadWrapper(const Byte *data, SizeT length) {
+omg::PayloadWrapper::PayloadWrapper(const Byte *data, SizeT length) {
     this->_dataPtr = data;
     this->_length = length;
 }
 
-SizeT PayloadWrapper::length() const {
+omg::SizeT omg::PayloadWrapper::length() const {
     return this->_length;
 }
 
-const Byte *PayloadWrapper::data() const {
+const omg::Byte *omg::PayloadWrapper::data() const {
     return this->_dataPtr;
 }

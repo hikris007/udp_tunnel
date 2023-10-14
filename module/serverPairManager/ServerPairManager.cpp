@@ -4,7 +4,7 @@
 
 #include "ServerPairManager.h"
 
-ServerPairManager::ServerPairManager(AppContext* appContext) {
+omg::ServerPairManager::ServerPairManager(AppContext* appContext) {
     this->_appContext = appContext;
 
     this->onReceive = [](const PairPtr& pair, const Byte* payload, SizeT length){

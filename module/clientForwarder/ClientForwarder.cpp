@@ -7,23 +7,6 @@
 omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientPairManager) {
     this->_clientPairManager = std::move(clientPairManager);
 
-
-    /*!
-     * 告诉Pair怎么发送
-     */
-    this->pairSendHandler = [this](const PairPtr& pair, const Byte* payload, SizeT length){
-        // 获取 Pair 上下文
-        ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
-
-        // 从上下文中获取所属的隧道
-        // 如果没成功就返回 放弃写入
-        TunnelPtr tunnel = clientPairContext->tunnel;
-        if(tunnel == nullptr)
-            return (SizeT)-1; // TODO:
-
-        return tunnel->send(payload, length);
-    };
-
     this->onPairClose = [this] (const PairPtr& pair){
         std::lock_guard<std::mutex> lockGuard(this->_locker);
 

@@ -8,18 +8,22 @@
 #include "../../header/AppContext.h"
 #include "../serverPairManager/ServerPairManager.h"
 
-class Server {
-public:
-    explicit Server(AppContext* appContext);
+namespace omg {
 
-    Int run();
-    Int shutdown();
+    class Server {
+    public:
+        explicit Server(AppContext* appContext);
 
-private:
-    AppContext* _appContext = nullptr;
-    hv::EventLoopPtr _eventLoop = nullptr;
-    std::shared_ptr<ServerPairManager> _serverPairManager = nullptr;
-};
+        Int run();
+        Int shutdown();
+
+    private:
+        AppContext* _appContext = nullptr;
+        hv::EventLoopPtr _eventLoop = nullptr;
+        std::shared_ptr<ServerPairManager> _serverPairManager = nullptr;
+    };
+}
+
 
 
 #endif //UDP_TUNNEL_SERVER_H

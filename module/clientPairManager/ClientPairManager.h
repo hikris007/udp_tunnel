@@ -7,7 +7,7 @@
 
 #include <string>
 #include <unordered_map>
-#include <queue>
+#include <list>
 
 #include "../logger/Logger.h"
 #include "../pair/Pair.h"
@@ -59,6 +59,11 @@ namespace omg {
         std::function<void(const PairPtr& pair)> onPairCloseHandler = nullptr;
 
         /*!
+         * 需要告诉 Pair 怎么发送数据
+         */
+        std::function<SizeT(const PairPtr& pair,const Byte* payload, SizeT length)> pairSendHandler = nullptr;
+
+        /*!
          * 隧道关闭时的清理函数
          */
         std::function<void(const TunnelPtr& tunnel)> onTunnelDestroy = nullptr;
@@ -67,7 +72,7 @@ namespace omg {
         std::mutex _locker; // 锁
         std::unordered_map<TunnelID, TunnelPtr> _tunnels; // 传输层的列表
         std::unordered_map<TunnelID ,int> _tunnelPairCounter; // Key 是传输层的ID 值是空闲数量
-        std::queue<TunnelID> _availableTunnelIDs; // 存放可用的（有空闲位置的）底层传输层ID
+        std::list<TunnelID> _availableTunnelIDs; // 存放可用的（有空闲位置的）底层传输层ID
     };
 }
 

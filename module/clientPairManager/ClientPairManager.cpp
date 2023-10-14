@@ -37,6 +37,22 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         pair->onReceive(pair, payload+sizeof(PairID), length - sizeof(PairID));
     };
 
+    /*!
+     * 告诉Pair怎么发送
+     */
+    this->pairSendHandler = [this](const PairPtr& pair, const Byte* payload, SizeT length){
+        // 获取 Pair 上下文
+        ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+
+        // 从上下文中获取所属的隧道
+        // 如果没成功就返回 放弃写入
+        TunnelPtr tunnel = clientPairContext->tunnel;
+        if(tunnel == nullptr)
+            return (SizeT)-1; // TODO:
+
+        return tunnel->send(payload, length);
+    };
+
     // 当 Pair 关闭怎么处理
     this->onPairCloseHandler = [this](const PairPtr& pair){
         // 获取上下文
@@ -55,7 +71,7 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     /*!
      * 当隧道关闭的时候处理函数
      */
-    this->onTunnelDestroy = [](const TunnelPtr& tunnel){
+    this->onTunnelDestroy = [this](const TunnelPtr& tunnel){
         // 获取上下文
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
 
@@ -63,6 +79,22 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         clientTunnelContext->foreachPairs([](const PairPtr& pair){
             pair->close();
         });
+
+        // 从本地 Tunnels 移除
+        std::lock_guard<std::mutex> lockGuard(this->_locker);
+
+        auto iterator = std::find(this->_availableTunnelIDs.begin(), this->_availableTunnelIDs.end(), tunnel->id());
+        if(iterator != this->_availableTunnelIDs.end())
+            this->_availableTunnelIDs.erase(iterator);
+
+        auto iterator2 = this->_tunnelPairCounter.find(tunnel->id());
+        if(iterator2 != this->_tunnelPairCounter.end())
+            this->_tunnelPairCounter.erase(iterator2);
+
+        auto iterator3 = this->_tunnels.find(tunnel->id());
+        if(iterator3 != this->_tunnels.end())
+            this->_tunnels.erase(iterator3);
+
     };
 }
 
@@ -70,11 +102,12 @@ omg::Int omg::ClientPairManager::createTunnel() {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     // 创建隧道 & 包装智能指针
-    Tunnel *tunnel = TunnelFactory::createTunnel();
+    Tunnel *tunnel = TunnelFactory::createTunnel(this->_clientConfig->transportProtocol, this->_clientConfig->endpoint);
     TunnelPtr tunnelPtr = TunnelPtr(tunnel);
 
-    // TODO:注册事件
+    // 注册事件
     tunnelPtr->onReceive = this->onReceive;
+    tunnelPtr->onDestroy = this->onTunnelDestroy;
 
     // 配置上下文 & 设置上下文
     ClientTunnelContextPtr clientTunnelContext = std::make_shared<ClientTunnelContext>(
@@ -88,7 +121,7 @@ omg::Int omg::ClientPairManager::createTunnel() {
 
     // 添加到计数列表 & 添加到可用隧道列表
     this->_tunnelPairCounter.insert({tunnelID, 0});
-    this->_availableTunnelIDs.push(tunnelID);
+    this->_availableTunnelIDs.push_back(tunnelID);
 
     return 0;
 }
@@ -130,7 +163,7 @@ omg::Int omg::ClientPairManager::createPair(PairPtr& outputPair) {
 
     // 如果隧道的空位满了就从可用列表中移除
     if(targetCounter->second >= this->_clientConfig->carryingCapacity){
-        this->_availableTunnelIDs.pop();
+        this->_availableTunnelIDs.pop_front();
     }
 
     // 返回结果
