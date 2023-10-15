@@ -20,11 +20,11 @@ void omg::Client::garbageCollection() {
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
         // 当前时间戳(毫秒)
-        SizeT cts = omg::utils::Time::getCurrentTs();
+        size_t cts = omg::utils::Time::getCurrentTs();
 
         // 差
-        SizeT sinceLastWrite = cts - clientPairContext->_lastDataSentTime;
-        SizeT sinceLastReceived = cts - clientPairContext->_lastDataReceivedTime;
+        size_t sinceLastWrite = cts - clientPairContext->_lastDataSentTime;
+        size_t sinceLastReceived = cts - clientPairContext->_lastDataReceivedTime;
 
         // 超时就关闭
         if(sinceLastWrite > this->_appContext->writeTimeout || sinceLastReceived > this->_appContext->receiveTimeout){
@@ -43,7 +43,7 @@ void omg::Client::garbageCollection() {
     this->_clientPairManager->foreachTunnels(handler);
 }
 
-omg::Int omg::Client::init() {
+int omg::Client::init() {
     // ------- 创建套接字 -------
 
     // 解析地址
@@ -80,7 +80,7 @@ omg::Int omg::Client::init() {
     };
 
     // 收到响应包就写回去
-    this->_clientForwarder->onReceive = [this](const PairPtr& pairPtr, const Byte* payload, SizeT length){
+    this->_clientForwarder->onReceive = [this](const PairPtr& pairPtr, const Byte* payload, size_t length){
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pairPtr->getContextPtr<ClientPairContext>();
 
@@ -98,14 +98,14 @@ omg::Int omg::Client::init() {
     return 0;
 }
 
-omg::Int omg::Client::run() {
+int omg::Client::run() {
     if(this->isRunning)
         return 0;
 
     std::lock_guard<std::mutex> locker(this->_runMutex);
 
     // 初始化
-    Int errorCode = this->init();
+    int errorCode = this->init();
     if(errorCode != 0){
         LOGGER_ERROR("Failed to init, error code: {}", errorCode);
         return -1;
@@ -125,7 +125,7 @@ omg::Int omg::Client::run() {
     return 0;
 }
 
-omg::Int omg::Client::shutdown() {
+int omg::Client::shutdown() {
     if(!this->isRunning)
         return 0;
 

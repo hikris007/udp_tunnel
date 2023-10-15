@@ -23,13 +23,14 @@ namespace omg {
             /*!
              * 把 IP:PORT 转换成 sockaddr_u
              * @return 错误码
+             * 0成功，非0失败
              */
-            static Int parseIPAddress(const std::string& ipAddress, sockaddr_u* sockaddrU){
+            static int parseIPAddress(const std::string& ipAddress, sockaddr_u* sockaddrU){
                 std::string ip;
                 int port;
 
-                Int errCode = splitIPAddress(ipAddress, ip, port);
-                if(errCode != SUCCESS)
+                int errCode = splitIPAddress(ipAddress, ip, port);
+                if(errCode != 0)
                     return errCode;
 
                 errCode = sockaddr_set_ipport(sockaddrU, ip.c_str(), port);
@@ -47,7 +48,7 @@ namespace omg {
              * @param port 存放端口结果
              * @return ParseErrorCode
              */
-            static Int splitIPAddress(const std::string& address, std::string& ip, int& port) {
+            static int splitIPAddress(const std::string& address, std::string& ip, int& port) {
                 // 正则表达式匹配 IPv4 或 IPv6 地址
                 std::regex ipv4Regex(R"((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+))");
                 std::regex ipv6Regex(R"((\[[a-fA-F0-9:]+\]):(\d+))");

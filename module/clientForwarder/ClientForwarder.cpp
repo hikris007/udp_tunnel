@@ -20,7 +20,7 @@ omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientP
     };
 }
 
-omg::SizeT omg::ClientForwarder::onSend(const std::string& sourceAddress, const Byte *payload, SizeT length) {
+size_t omg::ClientForwarder::onSend(const std::string& sourceAddress, const Byte *payload, size_t length) {
     // 尝试解析地址 解析失败则返回
     sockaddr_u sourceSockAddrU;
     memset((void *) &sourceAddress, 0, sizeof(sourceSockAddrU));
@@ -43,9 +43,6 @@ omg::SizeT omg::ClientForwarder::onSend(const std::string& sourceAddress, const 
 
         // 当数据回来怎么处理
         pair->onReceive = this->onReceive;
-
-        // 数据怎么发送
-        pair->sendHandler = this->pairSendHandler;
 
         // 注册关闭回调
         pair->addOnCloseHandler(this->onPairClose);

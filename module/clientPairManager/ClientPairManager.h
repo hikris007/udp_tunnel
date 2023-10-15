@@ -51,7 +51,7 @@ namespace omg {
          * 从隧道接收到的整个数据 包含 Pair 头
          * 需要Manager处理后调用相关的Pair
          */
-        std::function<void(const TunnelPtr& tunnel, const Byte* payload, SizeT length)> onReceive = nullptr;
+        std::function<void(const TunnelPtr& tunnel, const Byte* payload, size_t length)> onReceive = nullptr;
 
         /*！
          * 当Pair关闭时的清理函数
@@ -61,7 +61,7 @@ namespace omg {
         /*!
          * 需要告诉 Pair 怎么发送数据
          */
-        std::function<SizeT(const PairPtr& pair,const Byte* payload, SizeT length)> pairSendHandler = nullptr;
+        std::function<size_t(const PairPtr& pair,const Byte* payload, size_t length)> pairSendHandler = nullptr;
 
         /*!
          * 隧道关闭时的清理函数

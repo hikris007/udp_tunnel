@@ -10,7 +10,7 @@ using WsClient = hv::WebSocketClient;
 using WsClientUniquePtr = std::unique_ptr<WsClient>;
 
 omg::LibhvWsClientTunnel::LibhvWsClientTunnel(hv::EventLoopPtr eventLoop, std::string  url, TunnelID tunnelID)
-    : _currentState(INITIAL),
+    : _state({INITIAL, INITIAL}),
       _tunnelID(tunnelID),
       _url(std::move(url)),
       _webSocketClient(WsClientUniquePtr(new WsClient(std::move(eventLoop))))
@@ -32,7 +32,7 @@ omg::LibhvWsClientTunnel::LibhvWsClientTunnel(hv::EventLoopPtr eventLoop, std::s
     this->_webSocketClient->onclose = [this](){
 
         // 如果上一步还是在连接中 那就是发生错误
-        if(this->_currentState == CONNECTING){
+        if(this->_state.current == CONNECTING){
             this->changeState(ERROR);
             return;
         }
@@ -71,37 +71,32 @@ void omg::LibhvWsClientTunnel::cleanup() {
 
 void omg::LibhvWsClientTunnel::changeState(omg::Tunnel::State state) {
     // 如果当前状态和要切换的状态一样就跳过
-    if(state == this->_currentState)
+    if(state == this->_state.current)
         return;
 
     std::lock_guard<std::mutex> lockGuard(this->_locker);
-
-    // 保存好切换之前的状态&更新状态
-    State prevState = this->_currentState;
-    this->_currentState = state;
-
-    // 如果设置了回调就通知
-    if(this->onStateChange)
-        this->onStateChange(shared_from_this(), prevState, this->_currentState);
+    this->_state.previous = this->_state.current;
+    this->_state.current = state;
 }
 
 omg::LibhvWsClientTunnel::Type omg::LibhvWsClientTunnel::type() {
     return Type::RELIABLE;
 }
 
-omg::LibhvWsClientTunnel::State omg::LibhvWsClientTunnel::state() {
-    return this->_currentState;
+const omg::LibhvWsClientTunnel::StateResult& omg::LibhvWsClientTunnel::state() {
+    return this->_state;
 }
 
 omg::TunnelID omg::LibhvWsClientTunnel::id() {
     return this->_tunnelID;
 }
 
-omg::SizeT omg::LibhvWsClientTunnel::send(const omg::Byte* payload, omg::SizeT length) {
+omg::size_t omg::LibhvWsClientTunnel::send(const omg::Byte* payload, size_t length) {
     return this->_webSocketClient->send((char*) payload, length);
 }
 
-omg::Int omg::LibhvWsClientTunnel::destroy() {
+int omg::LibhvWsClientTunnel::destroy() {
     this->cleanup();
+    this->_webSocketClient->close();
     return 0;
 }

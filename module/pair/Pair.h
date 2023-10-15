@@ -16,11 +16,11 @@
 
 namespace omg {
     class Pair;
-    typedef Uint8 PairID;
+    typedef uint8 PairID;
     typedef std::shared_ptr<Pair> PairPtr;
     typedef std::function<void(const PairPtr& pair)> onCloseCallback;
-    typedef std::function<SizeT(const PairPtr& pair,const Byte* payload, SizeT length)> SendHandler;
-    typedef std::function<void(const PairPtr& pair,const Byte* payload, SizeT length)> onReceiveCallback;
+    typedef std::function<size_t (const PairPtr& pair,const Byte* payload, size_t length)> SendHandler;
+    typedef std::function<void(const PairPtr& pair,const Byte* payload, size_t length)> onReceiveCallback;
 
     static const PairID INVALID_PAIR_ID = 0;
 
@@ -89,7 +89,7 @@ namespace omg {
          * @param len
          * @return 成功发送的字节数（不包括 PairID 头大小）
          */
-        SizeT send(const Byte* payload, SizeT len);
+        size_t send(const Byte* payload, size_t len);
 
         /*!
          * 接收的回调
@@ -103,7 +103,7 @@ namespace omg {
          * 调用所有的关闭回调 & 设置状态为 closed
          * 0为成功
          */
-        Int close();
+        int close();
 
         // 关闭回调
         HANDLER_ID addOnCloseHandler(onCloseCallback callback);

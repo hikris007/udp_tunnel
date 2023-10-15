@@ -23,7 +23,7 @@ namespace omg {
          * @param length 数据的长度
          * @return 成功发送的长度
          */
-        SizeT onSend(const std::string& sourceAddress, const Byte* payload, SizeT length);
+        size_t onSend(const std::string& sourceAddress, const Byte* payload, size_t length);
 
         /*!
          * 处理从服务端发回来的数据(线程安全)
@@ -31,7 +31,7 @@ namespace omg {
          * @param payload 接收到的数据
          * @param length 数据长度
          */
-        std::function<SizeT(const PairPtr& pair, const Byte* payload, SizeT length)> onReceive = nullptr;
+        std::function<size_t(const PairPtr& pair, const Byte* payload, size_t length)> onReceive = nullptr;
     protected:
     private:
         /*!

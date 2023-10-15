@@ -24,40 +24,40 @@ namespace omg {
         ~Payload();
 
         // 根据容量大小的构造函数
-        explicit Payload(SizeT capacity);
+        explicit Payload(size_t capacity);
 
         // 创建时拷贝数据
         // buffer 要拷贝的数据
         // begin  在Message中的起始位置
         // length 要拷贝的数量
         // capacity 创建的底层容器的容量
-        Payload(const Byte *buffer, SizeT begin, SizeT length, SizeT capacity);
+        Payload(const Byte *buffer, size_t begin, size_t length, size_t capacity);
 
         // 创建时拷贝数据
         // buffer 要拷贝的数据
         // begin  在Message中的起始位置
         // length 要拷贝的数量
         // 此时底层容器的数量等于begin+length
-        Payload(const Byte *buffer, SizeT begin, SizeT length);
+        Payload(const Byte *buffer, size_t begin, size_t length);
 
         // 创建时拷贝数据
         // buffer 要拷贝的数据
         // length 要拷贝的数量
         // 此时底层容器的数量等于length
-        Payload(const Byte *buffer, SizeT length);
+        Payload(const Byte *buffer, size_t length);
 
         // copy from
         // buffer 数据
         // begin 在底层容器起始位置
         // length 拷贝的个数
-        SizeT copyFrom(const Byte *buffer, SizeT begin, SizeT length);
+        size_t copyFrom(const Byte *buffer, size_t begin, size_t length);
 
         // 获取当前容器的容量
-        SizeT capacity() const;
+        size_t capacity() const;
 
     protected:
     private:
-        SizeT _capacity = 0;
+        size_t _capacity = 0;
         Byte* _data = nullptr;
         std::mutex _locker;
     };

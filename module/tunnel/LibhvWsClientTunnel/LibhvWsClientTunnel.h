@@ -16,9 +16,9 @@ namespace omg {
         ~LibhvWsClientTunnel() override;
 
         TunnelID id() override;
-        Int destroy() override;
-        SizeT send(const Byte *payload, SizeT len) override;
-        State state() override;
+        int destroy() override;
+        size_t send(const Byte *payload, size_t len) override;
+        const StateResult& state() override;
         Type type() override;
 
     protected:
@@ -26,7 +26,8 @@ namespace omg {
         void cleanup();
 
     private:
-        State _currentState;
+        StateResult _state;
+
         TunnelID _tunnelID = INVALID_TUNNEL_ID;
 
         std::string _url;

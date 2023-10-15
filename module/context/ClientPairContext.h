@@ -16,8 +16,8 @@ namespace omg {
         /*!
          * Client 需要用来定时清理
          */
-        SizeT _lastDataReceivedTime = 0; // 最后从服务端接收数据的时间戳（秒）
-        SizeT _lastDataSentTime = 0; // 最后一次发送给服务端数据的时间戳（秒）
+        size_t _lastDataReceivedTime = 0; // 最后从服务端接收数据的时间戳（秒）
+        size_t _lastDataSentTime = 0; // 最后一次发送给服务端数据的时间戳（秒）
 
 
         /*!

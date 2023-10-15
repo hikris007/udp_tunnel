@@ -5,46 +5,53 @@
 #ifndef UDP_TUNNEL_SERVERTUNNELCONTEXT_H
 #define UDP_TUNNEL_SERVERTUNNELCONTEXT_H
 
-class ServerTunnelContext {
-public:
-    void addPair(PairPtr pair){
-        std::lock_guard<std::mutex> locker(this->_locker);
-        this->_pairs.insert({ pair->id(), pair });
-    }
+#include "../pair/Pair.h"
 
-    void removePair(const PairPtr& pair){
-        std::lock_guard<std::mutex> locker(this->_locker);
-        auto iterator = this->_pairs.find(pair->id());
-        if(iterator == this->_pairs.end())
-            return;
+namespace omg {
+    class ServerTunnelContext {
+    public:
+        void addPair(PairPtr pair){
+            std::lock_guard<std::mutex> locker(this->_locker);
+            this->_pairs.insert({ pair->id(), pair });
+        }
 
-        this->_pairs.erase(iterator);
-    }
+        void removePair(const PairPtr& pair){
+            std::lock_guard<std::mutex> locker(this->_locker);
+            auto iterator = this->_pairs.find(pair->id());
+            if(iterator == this->_pairs.end())
+                return;
 
-    // 根据 PairID 获取 Pair
-    // 如果不存在 / 引用过期 都返回 nullptr
-    PairPtr getPair(PairID pairID){
-        if(pairID == INVALID_PAIR_ID)
-            return nullptr;
+            this->_pairs.erase(iterator);
+        }
 
-        std::lock_guard<std::mutex> locker(this->_locker);
+        // 根据 PairID 获取 Pair
+        // 如果不存在 / 引用过期 都返回 nullptr
+        PairPtr getPair(PairID pairID){
+            if(pairID == INVALID_PAIR_ID)
+                return nullptr;
 
-        auto iterator = this->_pairs.find(pairID);
-        if (iterator == this->_pairs.end())
-            return nullptr;
+            std::lock_guard<std::mutex> locker(this->_locker);
 
-        if(iterator->second.expired())
-            return nullptr;
+            auto iterator = this->_pairs.find(pairID);
+            if (iterator == this->_pairs.end())
+                return nullptr;
 
-        PairPtr pairPtr = iterator->second.lock();
+            if(iterator->second.expired())
+                return nullptr;
 
-        return std::move(pairPtr);
-    }
-private:
-    std::mutex _locker;
-    std::unordered_map<PairID, std::weak_ptr<Pair>> _pairs; // 映射的集合
-};
+            PairPtr pairPtr = iterator->second.lock();
 
-typedef std::shared_ptr<ServerTunnelContext> ServerTunnelContextPtr;
+            return std::move(pairPtr);
+        }
+    private:
+        std::mutex _locker;
+        std::unordered_map<PairID, std::weak_ptr<Pair>> _pairs; // 映射的集合
+    };
+
+    typedef std::shared_ptr<ServerTunnelContext> ServerTunnelContextPtr;
+}
+
+
+
 
 #endif //UDP_TUNNEL_SERVERTUNNELCONTEXT_H

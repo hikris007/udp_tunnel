@@ -13,17 +13,17 @@ namespace omg {
     public:
         PayloadWrapper();
 
-        PayloadWrapper(const Byte* data, SizeT length);
+        PayloadWrapper(const Byte* data, size_t length);
 
         // 获取数据的指针
         const Byte *data() const;
 
         // 获取当前消息的长度
-        SizeT length() const;
+        size_t length() const;
 
     protected:
         const Byte* _dataPtr = nullptr;
-        SizeT _length = 0;
+        size_t _length = 0;
     };
 }
 

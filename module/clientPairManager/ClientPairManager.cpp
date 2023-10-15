@@ -11,7 +11,7 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     /*!
      * 当从隧道拿到数据后，应该派发
      */
-    this->onReceive = [this](const TunnelPtr& tunnel, const Byte* payload, SizeT length){
+    this->onReceive = [this](const TunnelPtr& tunnel, const Byte* payload, size_t length){
         // 数据是：Header + Payload
         // 如果长度小于等于 sizeof(Header) 就返回
         // 因为没有数据没有任何意义
@@ -40,7 +40,7 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     /*!
      * 告诉Pair怎么发送
      */
-    this->pairSendHandler = [this](const PairPtr& pair, const Byte* payload, SizeT length){
+    this->pairSendHandler = [this](const PairPtr& pair, const Byte* payload, size_t length){
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
@@ -48,7 +48,7 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         // 如果没成功就返回 放弃写入
         TunnelPtr tunnel = clientPairContext->tunnel;
         if(tunnel == nullptr)
-            return (SizeT)-1; // TODO:
+            return -1;
 
         return tunnel->send(payload, length);
     };
@@ -60,7 +60,7 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
 
         // 从上下文中获取所属的隧道 & 上下文
         TunnelPtr tunnel = clientPairContext->tunnel;;
-        if(tunnel == nullptr) return (SizeT)-1; // TODO:
+        if(tunnel == nullptr) return -1;
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
 
         // 解除关联 & 释放 PairID

@@ -12,7 +12,7 @@
 
 #include "../../header/typedef.h"
 
-typedef omg::Uint32 HANDLER_ID;
+typedef omg::uint32 HANDLER_ID;
 
 namespace omg {
     template<typename ... Args>

@@ -13,9 +13,7 @@ namespace omg {
     class Tunnel;
     typedef std::shared_ptr<Tunnel> TunnelPtr;
 
-
-    typedef Uint32 TunnelID;
-
+    typedef uint32 TunnelID;
     const TunnelID INVALID_TUNNEL_ID = 0;
 
     class Tunnel {
@@ -38,6 +36,11 @@ namespace omg {
 
             DESTROYING,
             DESTROYED
+        };
+
+        struct StateResult {
+            State previous;
+            State current;
         };
 
         enum Type {
@@ -64,34 +67,36 @@ namespace omg {
         }
 
         // 销毁隧道
-        virtual Int destroy() = 0;
-
-        // 当隧道被销毁的回调
-        // 传入当前隧道的指针
-        std::function<void(const TunnelPtr& tunnel)> onDestroy = nullptr;
+        virtual int destroy() = 0;
 
         // 传入消息
         // 返回写入的字节数
-        virtual SizeT send(const Byte* payload, SizeT len) = 0;
-
-        // 当有消息的回调
-        // 传入当前隧道和发送完成的消息
-        std::function<void(const TunnelPtr& tunnel, const Byte* payload, SizeT length)> onReceive = nullptr;
-
-        // 当隧道状态变更的回调
-        // 传入当前隧道
-        // 之前的的状态
-        // 当前状态
-        std::function<void(const TunnelPtr tunnel, State from, State state)> onStateChange = nullptr;
+        virtual size_t send(const Byte* payload, size_t len) = 0;
 
         // 获取当前状态
-        virtual State state() = 0;
+        virtual const StateResult& state() = 0;
 
         // 获取隧道类型
         virtual Type type() = 0;
 
         // 获取隧道的唯一 ID
         virtual TunnelID id() = 0;
+
+        // ------- 回调 -------
+
+        // 当有消息的回调
+        // 传入当前隧道和发送完成的消息
+        std::function<void(const TunnelPtr& tunnel, const Byte* payload, size_t length)> onReceive = nullptr;
+
+        // 当隧道建立成功后调用
+        std::function<void(const TunnelPtr& tunnel)> onReady = nullptr;
+
+        // 隧道建立失败调用
+        std::function<void(const TunnelPtr& tunnel, void* data)> onError = nullptr;
+
+        // 当隧道被销毁之前的回调
+        // 传入当前隧道的指针
+        std::function<void(const TunnelPtr& tunnel)> onDestroy = nullptr;
 
     protected:
         std::mutex _locker;

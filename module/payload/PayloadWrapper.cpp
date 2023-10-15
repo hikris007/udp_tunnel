@@ -8,12 +8,12 @@ omg::PayloadWrapper::PayloadWrapper(){
 
 }
 
-omg::PayloadWrapper::PayloadWrapper(const Byte *data, SizeT length) {
+omg::PayloadWrapper::PayloadWrapper(const Byte *data, size_t length) {
     this->_dataPtr = data;
     this->_length = length;
 }
 
-omg::SizeT omg::PayloadWrapper::length() const {
+omg::size_t omg::PayloadWrapper::length() const {
     return this->_length;
 }
 

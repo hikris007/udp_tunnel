@@ -23,14 +23,14 @@ namespace omg {
          * @return 状态码
          * 启动后会阻塞
          */
-        Int run();
+        int run();
 
         /*!
          * 关闭 线程安全
          * @return 状态码
          * 0为成功
          */
-        Int shutdown();
+        int shutdown();
 
     private:
         /*!
@@ -40,7 +40,7 @@ namespace omg {
          * @return 状态码
          * 0 成功
          */
-        Int init();
+        int init();
 
         /*!
          * GC清理函数 会清理所有长时间没有使用的 Pair

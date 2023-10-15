@@ -11,7 +11,7 @@ namespace omg {
     class ClientTunnelContext {
 
     public:
-        ClientTunnelContext(SizeT carryingCapacity){
+        ClientTunnelContext(size_t carryingCapacity){
             // 初始化 PairID 池
             this->initAvailablePairIDs(carryingCapacity);
         }
@@ -94,10 +94,10 @@ namespace omg {
         }
 
     private:
-        void initAvailablePairIDs(SizeT carryingCapacity){
-            SizeT begin = INVALID_PAIR_ID+1;
+        void initAvailablePairIDs(size_t carryingCapacity){
+            size_t begin = INVALID_PAIR_ID+1;
 
-            for(SizeT i = begin; this->_availablePairIDs.size() < carryingCapacity; i++){
+            for(size_t i = begin; this->_availablePairIDs.size() < carryingCapacity; i++){
                 this->putSeatNumber(i);
             }
         }

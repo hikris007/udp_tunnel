@@ -19,7 +19,7 @@ namespace omg {
         ServerPairManager(AppContext* appContext);
 
         void onTunnelOpen(TunnelPtr tunnelPtr);
-        SizeT onSend(TunnelPtr tunnelPtr, const Byte* payload, SizeT length);
+        size_t onSend(TunnelPtr tunnelPtr, const Byte* payload, size_t length);
 
     private:
         Int createPair(PairID pairID, PairPtr& pairPtr);
@@ -27,8 +27,8 @@ namespace omg {
     protected:
     private:
         // 包装
-        std::function<SizeT(const PairPtr pair,const Byte* payload, SizeT len)> handleSend = nullptr;
-        std::function<void(const PairPtr&, const Byte* payload, SizeT length)> onReceive = nullptr;
+        std::function<size_t(const PairPtr pair,const Byte* payload, size_t len)> handleSend = nullptr;
+        std::function<void(const PairPtr&, const Byte* payload, size_t length)> onReceive = nullptr;
 
         AppContext* _appContext = nullptr;
         std::unordered_map<TunnelID, TunnelPtr> _tunnels; // 传输层的列表

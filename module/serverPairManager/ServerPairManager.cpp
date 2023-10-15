@@ -7,7 +7,7 @@
 omg::ServerPairManager::ServerPairManager(AppContext* appContext) {
     this->_appContext = appContext;
 
-    this->onReceive = [](const PairPtr& pair, const Byte* payload, SizeT length){
+    this->onReceive = [](const PairPtr& pair, const Byte* payload, size_t length){
         // 获取上下文
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
 
@@ -18,7 +18,7 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext) {
         tunnelPtr.lock()->send(payload, length);
     };
 
-    this->handleSend = [this](const PairPtr pair,const Byte* payload, SizeT len){
+    this->handleSend = [this](const PairPtr pair,const Byte* payload, size_t len){
         // 获取上下文
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
 
@@ -29,14 +29,14 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext) {
 
 void ServerPairManager::onTunnelOpen(TunnelPtr tunnelPtr) {
     // 注册事件
-    tunnelPtr->onReceive = [this](TunnelPtr tunnel, const Byte* payload, SizeT len){
+    tunnelPtr->onReceive = [this](TunnelPtr tunnel, const Byte* payload, size_t len){
         this->onSend(tunnel, payload, len);
     };
 
     this->_tunnels.insert({ tunnelPtr->id(), tunnelPtr });
 }
 
-SizeT ServerPairManager::onSend(TunnelPtr tunnel, const Byte *payload, SizeT len) {
+SizeT ServerPairManager::onSend(TunnelPtr tunnel, const Byte *payload, size_t len) {
     if(payload == nullptr || len < (sizeof(PairID) + 1))
         return 0;
 
