@@ -7,6 +7,8 @@
 
 #include <functional>
 #include "../payload/Payload.h"
+#include "../callbackManager/CallBackManager.h"
+#include "../contextManager/ContextManager.hpp"
 
 namespace omg {
 
@@ -16,7 +18,12 @@ namespace omg {
     typedef uint32 TunnelID;
     const TunnelID INVALID_TUNNEL_ID = 0;
 
-    class Tunnel {
+    // 回调类型定义
+    typedef std::function<void(const TunnelPtr& tunnel)> OnReadyCallback;
+    typedef std::function<void(const TunnelPtr& tunnel, void* data)> OnErrorCallback;
+    typedef std::function<void(const TunnelPtr& tunnel)> OnDestroyCallback;
+
+    class Tunnel : public ContextManager {
     public:
         enum State {
             // INITIAL -> CONNECTING
@@ -51,27 +58,12 @@ namespace omg {
 
         virtual ~Tunnel() = default;
 
-        // 获取上下文智能指针
-        template<class T> std::shared_ptr<T> getContextPtr(){
-            return std::static_pointer_cast<T>(this->_ctxPtr);
-        }
-
-        // 设置上下文智能指针
-        void setContextPtr(const std::shared_ptr<void>& ctx){
-            this->_ctxPtr = ctx;
-        }
-
-        // 删除上下文智能指针
-        void deleteContextPtr(){
-            this->_ctxPtr.reset();
-        }
-
         // 销毁隧道
         virtual int destroy() = 0;
 
         // 传入消息
         // 返回写入的字节数
-        virtual size_t send(const Byte* payload, size_t len) = 0;
+        virtual size_t send(const Byte* payload, size_t length) = 0;
 
         // 获取当前状态
         virtual const StateResult& state() = 0;
@@ -89,18 +81,18 @@ namespace omg {
         std::function<void(const TunnelPtr& tunnel, const Byte* payload, size_t length)> onReceive = nullptr;
 
         // 当隧道建立成功后调用
-        std::function<void(const TunnelPtr& tunnel)> onReady = nullptr;
+        virtual HANDLER_ID addOnReadyHandler(OnReadyCallback onReadyCallback) = 0;
+        virtual void removeOnReadyHandler(HANDLER_ID handlerID) = 0;
 
         // 隧道建立失败调用
-        std::function<void(const TunnelPtr& tunnel, void* data)> onError = nullptr;
+        virtual HANDLER_ID addOnErrorHandler(OnErrorCallback onErrorCallback) = 0;
+        virtual void removeOnErrorHandler(HANDLER_ID handlerID) = 0;
 
         // 当隧道被销毁之前的回调
-        // 传入当前隧道的指针
-        std::function<void(const TunnelPtr& tunnel)> onDestroy = nullptr;
+        virtual HANDLER_ID addOnDestroyHandler(OnDestroyCallback onDestroyCallback) = 0;
+        virtual void removeOnDestroyHandler(HANDLER_ID handlerID) = 0;
 
     protected:
-        std::mutex _locker;
-        std::shared_ptr<void> _ctxPtr;
     };
 
 }

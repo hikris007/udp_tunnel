@@ -10,6 +10,7 @@
 #include <memory>
 #include "cstring"
 #include "../../header/typedef.h"
+#include "../contextManager/ContextManager.hpp"
 #include "../callbackManager/CallBackManager.h"
 
 
@@ -34,7 +35,7 @@ namespace omg {
      * close ok
      */
 
-    class Pair : public std::enable_shared_from_this<Pair>{
+    class Pair : public ContextManager, public std::enable_shared_from_this<Pair>{
     public:
         // 删除复制和赋值操作
         Pair(const Pair&) = delete;
@@ -52,30 +53,6 @@ namespace omg {
          * 会删除暂存区
          */
         ~Pair();
-
-        /*!
-         * 获取上下文智能指针
-         * @tparam T 你的上下文的类型
-         * @return 返回上下文
-         */
-        template<class T> std::shared_ptr<T> getContextPtr(){
-            return std::static_pointer_cast<T>(this->_ctxPtr);
-        }
-
-        /*!
-         * 删除上下文智能指针
-         */
-        void deleteContextPtr(){
-            this->_ctxPtr.reset();
-        }
-
-        /*!
-         * 设置上下文智能指针
-         * @param ctx 上下文
-         */
-        void setContextPtr(const std::shared_ptr<void> &ctx){
-            this->_ctxPtr = ctx;
-        }
 
         // 获取映射唯一ID
         PairID id() const;
@@ -119,9 +96,6 @@ namespace omg {
 
         // 暂存数据 把两段数据拼起来(包含 PairID 头)
         Byte* _data = nullptr;
-
-        // 上下文智能指针
-        std::shared_ptr<void> _ctxPtr;
 
         // 锁
         std::mutex _closeMutex;

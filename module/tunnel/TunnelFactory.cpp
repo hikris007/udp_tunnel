@@ -40,7 +40,7 @@ omg::TunnelFactory::TunnelFactory() {
     this->initIDPool();
 }
 
-omg::Tunnel* omg::TunnelFactory::createTunnel(TransportProtocol transportProtocol, const std::string& endpoint) {
+omg::TunnelPtr omg::TunnelFactory::createTunnel(TransportProtocol transportProtocol, const std::string& endpoint) {
     switch (transportProtocol) {
         case Websocket:
             return createWsTunnel(endpoint);
@@ -50,6 +50,6 @@ omg::Tunnel* omg::TunnelFactory::createTunnel(TransportProtocol transportProtoco
     }
 }
 
-omg::Tunnel *omg::TunnelFactory::createWsTunnel(const std::string &endpoint) {
-    return new LibhvWsClientTunnel(_eventLoop, endpoint, 1);
+omg::TunnelPtr omg::TunnelFactory::createWsTunnel(const std::string &endpoint) {
+    return std::make_shared<LibhvWsClientTunnel>(_eventLoop, endpoint, 1);
 }

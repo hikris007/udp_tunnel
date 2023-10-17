@@ -1,9 +1,7 @@
 #include <iostream>
 #include <string>
 #include "hv/UdpServer.h"
-#include "hv/WebSocketClient.h"
-#include "module/utils/socket.hpp"
-#include "module/tunnel/LibhvWsClientTunnel/LibhvWsClientTunnel.h"
+#include "module/tunnel/TunnelFactory.h"
 //
 //int main() {
 //    sockaddr_u sockaddrU;
@@ -18,55 +16,34 @@
 //    return 0;
 //}
 
-class MyC {
-public:
-    MyC(){
-        std::cout << "MyC" << std::endl;
-    }
-    ~MyC(){
-        std::cout << "~MyC" << std::endl;
-    }
-};
 
 int main(){
-//    hv::EventLoopPtr eventLoop = std::make_shared<hv::EventLoop>();
-//    std::shared_ptr<omg::LibhvWsClientTunnel> tunnel = std::make_shared<omg::LibhvWsClientTunnel>(eventLoop, "ws://124.222.224.186:8800", 1);
-//
-//    tunnel->onDestroy = [](const omg::TunnelPtr& tunnel){
-//        std::cout << "Destroy" << std::endl;
-//    };
-//
-//    tunnel->onReceive = [](const omg::TunnelPtr& tunnel, const omg::Byte* payload, omg::SizeT length){
-//        std::string str((char*)payload, length);
-//        std::cout << "On Data:" << str << "   len"<< length << std::endl;
-//    };
-//
-//    tunnel->onStateChange = [](const omg::TunnelPtr& tunnel, omg::LibhvWsClientTunnel::State old, omg::LibhvWsClientTunnel::State current) {
-//        std::cout << "State change -> prev:" << old << "new:" << current << std::endl;
-//    };
-//
-//    std::string msg = "Hey Kris";
-//
-//
-//
-//    getchar();
-//    int nwrite = tunnel->send((omg::Byte*)msg.c_str(), 8);
-//    std::cout << "nwrite:" <<nwrite << std::endl;
-//    getchar();
-//    tunnel->destroy();
-//    getchar();
+    hv::EventLoopPtr eventLoop = std::make_shared<hv::EventLoop>();
+    omg::TunnelFactory::getInstance().setEventLoopPtr(eventLoop);
 
-//    hv::WebSocketClient wsClient;
-//    wsClient.onclose = [](){
-//        std::cout << "Destroy" << std::endl;
-//    };
-//
-//    int errCode = wsClient.open("ws://124.222.224.186:8800");
-//    std::cout << "ERRCODE:" << errCode << std::endl;
-//
-//    getchar();
-//    wsClient.close();
-//    getchar();
+    omg::TunnelPtr tunnelPtr = omg::TunnelFactory::getInstance().createTunnel(omg::TransportProtocol::Websocket, "ws://124.222.224.186:8800");
 
+    tunnelPtr->onReceive = [](const omg::TunnelPtr& tunnel, const omg::Byte* payload, size_t length){
+        std::cout << "Data Length:" << length << std::endl;
+    };
+
+    tunnelPtr->addOnReadyHandler([](const omg::TunnelPtr& tunnel){
+        std::cout << "Tunnel Ready:" << tunnel->id() << std::endl;
+    });
+
+    tunnelPtr->addOnErrorHandler([](const omg::TunnelPtr& tunnel, void* data){
+        std::cout << "Tunnel Ready:" << tunnel->id() << std::endl;
+    });
+
+    tunnelPtr->addOnDestroyHandler([](const omg::TunnelPtr& tunnel){
+        std::cout << "Tunnel Destroy:" << tunnel->id() << std::endl;
+    });
+    std::string str("Hey Kris");
+    getchar();
+    int n = tunnelPtr->send((omg::Byte*)str.c_str(),8);
+    std::cout << n << std::endl;
+    getchar();
+    tunnelPtr->destroy();
+    getchar();
     return 0;
 }
