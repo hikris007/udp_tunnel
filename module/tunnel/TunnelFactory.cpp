@@ -50,6 +50,35 @@ omg::TunnelPtr omg::TunnelFactory::createTunnel(TransportProtocol transportProto
     }
 }
 
+omg::TunnelID omg::TunnelFactory::getTunnelID() {
+    if(this->_tunnelIDPool.empty())
+        return INVALID_TUNNEL_ID;
+
+    std::lock_guard<std::mutex> lockGuard(this->_poolLocker);
+    TunnelID tunnelID = this->_tunnelIDPool.front();
+    this->_tunnelIDPool.pop();
+    return tunnelID;
+}
+
+void omg::TunnelFactory::putTunnelID(omg::TunnelID tunnelID) {
+    std::lock_guard<std::mutex> lockGuard(this->_poolLocker);
+    this->_tunnelIDPool.push(tunnelID);
+}
+
 omg::TunnelPtr omg::TunnelFactory::createWsTunnel(const std::string &endpoint) {
-    return std::make_shared<LibhvWsClientTunnel>(_eventLoop, endpoint, 1);
+    TunnelID tunnelID = this->getTunnelID();
+    if(tunnelID == INVALID_TUNNEL_ID) return nullptr;
+
+    TunnelPtr tunnel = std::make_shared<LibhvWsClientTunnel>(_eventLoop, endpoint, tunnelID);
+    if(tunnel == nullptr)return nullptr;
+
+    // 注册回调
+
+    // TODO: 考虑错误时怎么操作
+    // 当关闭时回收ID
+    tunnel->addOnDestroyHandler([this](const TunnelPtr& tunnel){
+        this->putTunnelID(tunnel->id());
+    });
+
+    return tunnel;
 }

@@ -30,6 +30,10 @@ namespace omg {
         void setEventLoopPtr(hv::EventLoopPtr eventLoop);
         void deleteEventLoopPtr();
 
+    protected:
+        void putTunnelID(TunnelID tunnelID);
+        TunnelID getTunnelID();
+
     private:
         // 私有构造函数，确保外部无法创建新实例
         TunnelFactory();
