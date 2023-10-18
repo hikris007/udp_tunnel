@@ -14,7 +14,7 @@ omg::Client::Client(AppContext *config) {
 
 void omg::Client::garbageCollection() {
     std::lock_guard<std::mutex> lockGuard(this->_gcMutex);
-
+    LOGGER_INFO("garbageCollection start.");
     auto pairHandler = [this](PairPtr& pair){
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
@@ -39,6 +39,7 @@ void omg::Client::garbageCollection() {
         // 遍历 Pair
         clientTunnelContext->foreachPairs(pairHandler);
     };
+    LOGGER_INFO("garbageCollection end.");
 
     this->_clientPairManager->foreachTunnels(handler);
 }
@@ -112,7 +113,7 @@ int omg::Client::run() {
     }
 
     // 垃圾回收
-    this->gcTimerID = this->_eventLoop->setInterval(5000, [this](hv::TimerID timerID){
+    this->gcTimerID = this->_eventLoop->setInterval(1000 * 10, [this](hv::TimerID timerID){
         this->garbageCollection();
     });
 

@@ -50,6 +50,10 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         if(tunnel == nullptr)
             return -1;
 
+        // 状态是成功连接才写入数据
+        if(tunnel->state().current != Tunnel::CONNECTED)
+            return -1;
+
         return tunnel->send(payload, length);
     };
 
@@ -123,6 +127,7 @@ int omg::ClientPairManager::createTunnel() {
     this->_tunnelPairCounter.insert({tunnelID, 0});
     this->_availableTunnelIDs.push_back(tunnelID);
 
+    LOGGER_INFO("New tunnel:{}", tunnelPtr->id());
     return 0;
 }
 
