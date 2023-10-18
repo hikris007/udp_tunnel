@@ -14,8 +14,8 @@ namespace omg {
     public:
         explicit Server(AppContext* appContext);
 
-        Int run();
-        Int shutdown();
+        int run();
+        int shutdown();
 
     private:
         AppContext* _appContext = nullptr;

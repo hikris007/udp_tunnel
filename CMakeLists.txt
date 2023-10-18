@@ -17,9 +17,8 @@ add_executable(udp_tunnel
         module/clientPairManager/ClientPairManager.cpp
         module/logger/Logger.cpp
         module/pair/Pair.cpp
-        module/server/Server.cpp
-        module/serverPairManager/ServerPairManager.cpp
         module/tunnel/TunnelFactory.cpp
+        module/tunnel/LibhvWsTunnel/Client.cpp
         main.cpp
         )
 add_executable(

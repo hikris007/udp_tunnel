@@ -4,18 +4,18 @@
 
 #include "Server.h"
 
-Server::Server(AppContext* appContext) {
+omg::Server::Server(AppContext* appContext) {
     this->_appContext = appContext;
 
     this->_serverPairManager = std::make_shared<ServerPairManager>(this->_eventLoop, this->_appContext);
 }
 
 // TODO:
-Int Server::shutdown() {
+int omg::Server::shutdown() {
     return 0;
 }
 
 // TODO:
-Int Server::run() {
+int Server::run() {
     return 0;
 }

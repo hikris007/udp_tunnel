@@ -32,7 +32,7 @@ namespace omg {
          * @return 错误码
          * 0 成功
          */
-        Int createTunnel();
+        int createTunnel();
 
         /*!
          * 创建一个 Pair
@@ -40,7 +40,7 @@ namespace omg {
          * @return 状态码
          * 0 成功
          */
-        Int createPair(PairPtr& outputPair);
+        int createPair(PairPtr& outputPair);
 
         // 获取所有隧道
         void foreachTunnels(const std::function<void(const TunnelPtr&)>& handler);

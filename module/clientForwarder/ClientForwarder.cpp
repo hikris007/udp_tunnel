@@ -21,16 +21,6 @@ omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientP
 }
 
 size_t omg::ClientForwarder::onSend(const std::string& sourceAddress, const Byte *payload, size_t length) {
-    // 尝试解析地址 解析失败则返回
-    sockaddr_u sourceSockAddrU;
-    memset((void *) &sourceAddress, 0, sizeof(sourceSockAddrU));
-
-    Int errCode = utils::Socket::parseIPAddress(sourceAddress, &sourceSockAddrU);
-    if(0 != errCode){
-        LOGGER_WARN("Failed to parse source address, source address: {}, error code: {}", sourceAddress, errCode);
-        return -1;
-    }
-
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     // 获取源地址对应的 Pair
@@ -55,8 +45,15 @@ size_t omg::ClientForwarder::onSend(const std::string& sourceAddress, const Byte
 
     // 如果是新添加的 Pair 则设置一些信息
     if(iterator == this->_sourceAddressMap.end()){
+        // 尝试解析地址 解析失败关闭 Pair
+        int errCode = utils::Socket::parseIPAddress(sourceAddress, &clientPairContext->_sourceAddressSockAddr);
+        if(0 != errCode){
+            pair->close();
+            LOGGER_WARN("Failed to parse source address, source address: {}, error code: {}", sourceAddress, errCode);
+            return -1;
+        }
+
         clientPairContext->_sourceAddress = sourceAddress;
-        memcpy(&clientPairContext->_sourceAddressSockAddr, &sourceSockAddrU, sizeof(sourceSockAddrU));
 
         this->_sourceAddressMap.insert({ sourceAddress, pair });
         LOGGER_INFO("New pair:{} <----> {}", pair->id(), sourceAddress);

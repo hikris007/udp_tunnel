@@ -29,16 +29,17 @@ int main(){
     size_t length = 8;
 
     omg::TunnelPtr tunnelPtr = nullptr;
-    for(int i=0;i<2;i++){
+    for(int i=0;i<100;i++){
         tunnelPtr = omg::TunnelFactory::getInstance().createTunnel(omg::TransportProtocol::Websocket, "ws://124.222.224.186:8800");
 
         tunnelPtr->onReceive = [](const omg::TunnelPtr& tunnel, const omg::Byte* payload, size_t length){
             std::cout << "Data Length:" << length << std::endl;
         };
 
-//        tunnelPtr->addOnReadyHandler([&data,length](const omg::TunnelPtr& tunnel){
-        tunnelPtr->addOnReadyHandler([](const omg::TunnelPtr& tunnel){
+        tunnelPtr->addOnReadyHandler([&data,length](const omg::TunnelPtr& tunnel){
+//        tunnelPtr->addOnReadyHandler([](const omg::TunnelPtr& tunnel){
             std::cout << "Tunnel Ready:" << tunnel->id() << std::endl;
+            tunnel->send(data,length);
         });
 
         tunnelPtr->addOnErrorHandler([](const omg::TunnelPtr& tunnel, void* data){

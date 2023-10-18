@@ -40,7 +40,7 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     /*!
      * 告诉Pair怎么发送
      */
-    this->pairSendHandler = [this](const PairPtr& pair, const Byte* payload, size_t length){
+    this->pairSendHandler = [this](const PairPtr& pair, const Byte* payload, size_t length) -> omg::size_t {
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
@@ -98,22 +98,22 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     };
 }
 
-omg::Int omg::ClientPairManager::createTunnel() {
+int omg::ClientPairManager::createTunnel() {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
-    // 创建隧道 & 包装智能指针
-    Tunnel *tunnel = TunnelFactory::createTunnel(this->_clientConfig->transportProtocol, this->_clientConfig->endpoint);
-    TunnelPtr tunnelPtr = TunnelPtr(tunnel);
+    // 创建隧道
+    TunnelPtr tunnelPtr = TunnelFactory::getInstance().createTunnel(this->_clientConfig->transportProtocol, this->_clientConfig->endpoint);
 
     // 注册事件
     tunnelPtr->onReceive = this->onReceive;
-    tunnelPtr->onDestroy = this->onTunnelDestroy;
+    tunnelPtr->addOnDestroyHandler(this->onTunnelDestroy);
+    // TODO: 注册错误事件
 
     // 配置上下文 & 设置上下文
     ClientTunnelContextPtr clientTunnelContext = std::make_shared<ClientTunnelContext>(
           this->_clientConfig->carryingCapacity
     );
-    tunnel->setContextPtr(clientTunnelContext);
+    tunnelPtr->setContextPtr(clientTunnelContext);
 
     // 放入列表
     TunnelID tunnelID = tunnelPtr->id();
@@ -126,7 +126,7 @@ omg::Int omg::ClientPairManager::createTunnel() {
     return 0;
 }
 
-omg::Int omg::ClientPairManager::createPair(PairPtr& outputPair) {
+int omg::ClientPairManager::createPair(PairPtr& outputPair) {
     // 如果没有可用的隧道就先创建
     if(this->_availableTunnelIDs.empty()){
         this->createTunnel();

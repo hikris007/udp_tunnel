@@ -13,7 +13,7 @@ namespace omg {
         TransportProtocol transportProtocol;
         std::string listenDescription;
         std::string endpoint;
-        Uint16 carryingCapacity;
+        omg::uint16 carryingCapacity;
     };
 
     // 配置项
@@ -24,8 +24,8 @@ namespace omg {
     };
 
     struct AppContext {
-        Int64 writeTimeout = 1000*60;
-        Int64 receiveTimeout = 1000*60;
+        omg::uint64 writeTimeout = 1000*60;
+        omg::uint64 receiveTimeout = 1000*60;
         TransportProtocol transportProtocol = TransportProtocol ::Websocket;
         RunMode runMode = RunMode::CLIENT;
         ServerConfig* serverConfig = nullptr;

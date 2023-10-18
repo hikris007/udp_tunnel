@@ -4,6 +4,7 @@
 
 #ifndef UDP_TUNNEL_SERVERPAIRMANAGER_H
 #define UDP_TUNNEL_SERVERPAIRMANAGER_H
+#include <unordered_map>
 
 #include "hv/EventLoop.h"
 
@@ -22,7 +23,7 @@ namespace omg {
         size_t onSend(TunnelPtr tunnelPtr, const Byte* payload, size_t length);
 
     private:
-        Int createPair(PairID pairID, PairPtr& pairPtr);
+        int createPair(PairID pairID, PairPtr& pairPtr);
 
     protected:
     private:
