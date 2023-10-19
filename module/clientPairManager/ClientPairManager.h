@@ -68,6 +68,11 @@ namespace omg {
          */
         std::function<void(const TunnelPtr& tunnel)> onTunnelDestroy = nullptr;
 
+        /*!
+         * 隧道出错时的清理函数
+         */
+        std::function<void(const TunnelPtr& tunnel, void* data)> onTunnelError = nullptr;
+
         ClientConfig* _clientConfig = nullptr; // 配置项
         std::mutex _locker; // 锁
         std::unordered_map<TunnelID, TunnelPtr> _tunnels; // 传输层的列表

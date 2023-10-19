@@ -58,13 +58,13 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     };
 
     // 当 Pair 关闭怎么处理
-    this->onPairCloseHandler = [this](const PairPtr& pair){
+    this->onPairCloseHandler = [this](const PairPtr& pair) -> void{
         // 获取上下文
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
         // 从上下文中获取所属的隧道 & 上下文
         TunnelPtr tunnel = clientPairContext->tunnel;;
-        if(tunnel == nullptr) return -1;
+        if(tunnel == nullptr) return;
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
 
         // 解除关联 & 释放 PairID
@@ -100,6 +100,31 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
             this->_tunnels.erase(iterator3);
 
     };
+
+    this->onTunnelError = [this](const TunnelPtr& tunnel, void* data){
+        // 获取上下文
+        ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+
+        // 遍历关闭 Pair
+        clientTunnelContext->foreachPairs([](const PairPtr& pair){
+            pair->close();
+        });
+
+        // 从本地 Tunnels 移除
+        std::lock_guard<std::mutex> lockGuard(this->_locker);
+
+        auto iterator = std::find(this->_availableTunnelIDs.begin(), this->_availableTunnelIDs.end(), tunnel->id());
+        if(iterator != this->_availableTunnelIDs.end())
+            this->_availableTunnelIDs.erase(iterator);
+
+        auto iterator2 = this->_tunnelPairCounter.find(tunnel->id());
+        if(iterator2 != this->_tunnelPairCounter.end())
+            this->_tunnelPairCounter.erase(iterator2);
+
+        auto iterator3 = this->_tunnels.find(tunnel->id());
+        if(iterator3 != this->_tunnels.end())
+            this->_tunnels.erase(iterator3);
+    };
 }
 
 int omg::ClientPairManager::createTunnel() {
@@ -107,11 +132,13 @@ int omg::ClientPairManager::createTunnel() {
 
     // 创建隧道
     TunnelPtr tunnelPtr = TunnelFactory::getInstance().createTunnel(this->_clientConfig->transportProtocol, this->_clientConfig->endpoint);
+    if(tunnelPtr == nullptr)
+        return -1;
 
     // 注册事件
     tunnelPtr->onReceive = this->onReceive;
     tunnelPtr->addOnDestroyHandler(this->onTunnelDestroy);
-    // TODO: 注册错误事件
+    tunnelPtr->addOnErrorHandler(this->onTunnelError);
 
     // 配置上下文 & 设置上下文
     ClientTunnelContextPtr clientTunnelContext = std::make_shared<ClientTunnelContext>(
@@ -134,7 +161,8 @@ int omg::ClientPairManager::createTunnel() {
 int omg::ClientPairManager::createPair(PairPtr& outputPair) {
     // 如果没有可用的隧道就先创建
     if(this->_availableTunnelIDs.empty()){
-        this->createTunnel();
+        int errCode = this->createTunnel();
+        if(errCode != 0) return -1;
     }
 
     std::lock_guard<std::mutex> lockGuard(this->_locker);

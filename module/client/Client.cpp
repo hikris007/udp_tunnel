@@ -10,6 +10,9 @@ omg::Client::Client(AppContext *config) {
     this->_clientPairManager = std::make_shared<ClientPairManager>(this->_appContext->clientConfig);
     this->_clientForwarder = std::unique_ptr<ClientForwarder>(new ClientForwarder(this->_clientPairManager));
     this->_udpServer = std::unique_ptr<hv::UdpServer>(new hv::UdpServer(this->_eventLoop));
+
+    // 初始化全局的隧道构造器的 EventLoop
+    TunnelFactory::getInstance().setEventLoopPtr(this->_eventLoop);
 }
 
 void omg::Client::garbageCollection() {

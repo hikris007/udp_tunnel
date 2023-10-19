@@ -74,7 +74,11 @@ omg::TunnelPtr omg::TunnelFactory::createWsTunnel(const std::string &endpoint) {
 
     // 注册回调
 
-    // TODO: 考虑错误时怎么操作
+    // 当失败时也是需要回收ID
+    tunnel->addOnErrorHandler([this](const TunnelPtr& tunnel, void* data){
+        this->putTunnelID(tunnel->id());
+    });
+
     // 当关闭时回收ID
     tunnel->addOnDestroyHandler([this](const TunnelPtr& tunnel){
         this->putTunnelID(tunnel->id());

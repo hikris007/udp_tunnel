@@ -3,6 +3,7 @@
 //
 
 #include "Client.h"
+#include <utility>
 
 namespace omg {
     using WsClient = hv::WebSocketClient;
@@ -11,7 +12,7 @@ namespace omg {
     LibhvWsClientTunnel::LibhvWsClientTunnel(hv::EventLoopPtr eventLoop, std::string url, omg::TunnelID tunnelID)
         : _state({INITIAL, INITIAL}),
           _tunnelID(tunnelID),
-          _url(url),
+          _url(std::move(url)),
           _webSocketClient(WsClientUniquePtr(new WsClient(std::move(eventLoop))))
     {
         // 成功连接
@@ -91,7 +92,12 @@ namespace omg {
     }
 
     size_t LibhvWsClientTunnel::send(const omg::Byte *payload, omg::size_t length) {
+        if(length < 1) return -1;
+
         // TODO:长度包含了头
+        if(this->_state.current != CONNECTED)
+            return -1;
+
         return this->_webSocketClient->send(reinterpret_cast<const char*>(payload), length);
     }
 

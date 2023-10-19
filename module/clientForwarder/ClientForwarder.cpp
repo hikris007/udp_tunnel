@@ -29,7 +29,11 @@ size_t omg::ClientForwarder::onSend(const std::string& sourceAddress, const Byte
     auto iterator = this->_sourceAddressMap.find(sourceAddress);
     if(iterator == this->_sourceAddressMap.end()){
         // 创建 Pair
-        this->_clientPairManager->createPair(pair);
+        int errCode = this->_clientPairManager->createPair(pair);
+        if(errCode != 0){
+            LOGGER_WARN("Failed to create pair, err code:{}", errCode);
+            return -1;
+        }
 
         // 当数据回来怎么处理
         pair->onReceive = this->onReceive;
