@@ -74,8 +74,6 @@ int omg::Client::init() {
 
     // 当从本地接收到包就写入处理
     this->_udpServer->onMessage = [this](const hv::SocketChannelPtr& channel, hv::Buffer* buffer){
-        LOGGER_DEBUG("Receive data length: {} from {}.", buffer->size(), channel->peeraddr());
-
         this->_clientForwarder->onSend(
                 channel->peeraddr(),
                 static_cast<const Byte*>(buffer->data()),

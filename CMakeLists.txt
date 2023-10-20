@@ -7,6 +7,8 @@ find_package(libhv CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
 find_package(Boost CONFIG COMPONENTS statechart)
+find_package(cityhash CONFIG REQUIRED)
+
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
@@ -30,12 +32,17 @@ add_executable(
         module/tunnel/LibhvWsTunnel/Client.cpp
 )
 
+
 target_link_libraries(udp_tunnel PRIVATE hv_static)
 target_link_libraries(udp_tunnel PRIVATE spdlog::spdlog)
 target_link_libraries(udp_tunnel PRIVATE CLI11::CLI11)
 target_link_libraries(udp_tunnel ${Boost_LIBRARIES})
+target_link_libraries(udp_tunnel PRIVATE cityhash)
+
 
 target_link_libraries(test PRIVATE hv_static)
 target_link_libraries(test PRIVATE spdlog::spdlog)
 target_link_libraries(test PRIVATE CLI11::CLI11)
 target_link_libraries(test ${Boost_LIBRARIES})
+target_link_libraries(test PRIVATE cityhash)
+

@@ -12,7 +12,8 @@ omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientP
 
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
-        auto iterator = this->_sourceAddressMap.find(clientPairContext->_sourceAddress);
+        size_t sockAddrHash = omg::utils::Socket::GenerateSockAddrHash(clientPairContext->_sourceAddressSockAddr);
+        auto iterator = this->_sourceAddressMap.find(sockAddrHash);
         if(iterator == this->_sourceAddressMap.end())
             return;
 
@@ -20,16 +21,24 @@ omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientP
     };
 }
 
-size_t omg::ClientForwarder::onSend(const std::string& sourceAddress, const Byte *payload, size_t length) {
+size_t omg::ClientForwarder::onSend(const sockaddr* sourceAddress, const Byte *payload, size_t length) {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
+
+    int errCode = -1;
+    size_t sockAddrHash = -1;
+    PairPtr pair = nullptr;
+
+    // 计算源地址哈希
+    omg::utils::Socket::GenerateSockAddrHash(*reinterpret_cast<const sockaddr_u*>(sourceAddress), sockAddrHash);
 
     // 获取源地址对应的 Pair
     // 如果此来源地址没有对应的 Pair 则分配一个
-    PairPtr pair = nullptr;
-    auto iterator = this->_sourceAddressMap.find(sourceAddress);
+
+    auto iterator = this->_sourceAddressMap.find(sockAddrHash);
     if(iterator == this->_sourceAddressMap.end()){
+
         // 创建 Pair
-        int errCode = this->_clientPairManager->createPair(pair);
+        errCode = this->_clientPairManager->createPair(pair);
         if(errCode != 0){
             LOGGER_WARN("Failed to create pair, err code:{}", errCode);
             return -1;
@@ -49,18 +58,10 @@ size_t omg::ClientForwarder::onSend(const std::string& sourceAddress, const Byte
 
     // 如果是新添加的 Pair 则设置一些信息
     if(iterator == this->_sourceAddressMap.end()){
-        // 尝试解析地址 解析失败关闭 Pair
-        int errCode = utils::Socket::parseIPAddress(sourceAddress, &clientPairContext->_sourceAddressSockAddr);
-        if(0 != errCode){
-            pair->close();
-            LOGGER_WARN("Failed to parse source address, source address: {}, error code: {}", sourceAddress, errCode);
-            return -1;
-        }
+//        clientPairContext->_sourceAddress = sourceAddress;
 
-        clientPairContext->_sourceAddress = sourceAddress;
-
-        this->_sourceAddressMap.insert({ sourceAddress, pair });
-        LOGGER_INFO("New pair:{} <----> {}", pair->id(), sourceAddress);
+        this->_sourceAddressMap.insert({ sockAddrHash, pair });
+        LOGGER_INFO("New pair:{} <----> {}", pair->id(), "");
     }
 
     // 写入数据

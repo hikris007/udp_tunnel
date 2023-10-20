@@ -21,6 +21,29 @@ namespace omg {
             };
 
             /*!
+             * 计算 sockaddr_u 的哈希
+             * @param addr
+             * @return 哈希
+             */
+            static int GenerateSockAddrHash(const sockaddr_u& addr, size_t& hash){
+                switch (addr.sa.sa_family) {
+                    case AF_INET:
+                        hash = CityHash64(reinterpret_cast<const char*>(&addr.sin), sizeof(struct sockaddr_in));
+                        break;
+
+                    case AF_INET6:
+                        hash = CityHash64(reinterpret_cast<const char*>(&addr.sin6), sizeof(struct sockaddr_in6));
+                        break;
+
+                    default:
+                        hash = CityHash64(reinterpret_cast<const char*>(&addr.sa), sizeof(struct sockaddr));
+                        break;
+                }
+
+                return 0;
+            }
+
+            /*!
              * 把 IP:PORT 转换成 sockaddr_u
              * @return 错误码
              * 0成功，非0失败
