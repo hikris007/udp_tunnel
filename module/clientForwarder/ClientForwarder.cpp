@@ -12,7 +12,9 @@ omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientP
 
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
-        size_t sockAddrHash = omg::utils::Socket::GenerateSockAddrHash(clientPairContext->_sourceAddressSockAddr);
+        size_t sockAddrHash = -1;
+        omg::utils::Socket::GenerateSockAddrHash(clientPairContext->_sourceAddressSockAddr, sockAddrHash);
+
         auto iterator = this->_sourceAddressMap.find(sockAddrHash);
         if(iterator == this->_sourceAddressMap.end())
             return;
@@ -21,7 +23,7 @@ omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientP
     };
 }
 
-size_t omg::ClientForwarder::onSend(const sockaddr* sourceAddress, const Byte *payload, size_t length) {
+size_t omg::ClientForwarder::onSend(const struct sockaddr* sourceAddress, const Byte *payload, size_t length) {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     int errCode = -1;
@@ -33,7 +35,6 @@ size_t omg::ClientForwarder::onSend(const sockaddr* sourceAddress, const Byte *p
 
     // 获取源地址对应的 Pair
     // 如果此来源地址没有对应的 Pair 则分配一个
-
     auto iterator = this->_sourceAddressMap.find(sockAddrHash);
     if(iterator == this->_sourceAddressMap.end()){
 
@@ -58,8 +59,11 @@ size_t omg::ClientForwarder::onSend(const sockaddr* sourceAddress, const Byte *p
 
     // 如果是新添加的 Pair 则设置一些信息
     if(iterator == this->_sourceAddressMap.end()){
-//        clientPairContext->_sourceAddress = sourceAddress;
+        // 把地址转换成 IP:Port 格式
+        char buf[SOCKADDR_STRLEN] = {0};
+        std::string source = SOCKADDR_STR(sourceAddress, buf);
 
+        clientPairContext->_sourceAddress = source;
         this->_sourceAddressMap.insert({ sockAddrHash, pair });
         LOGGER_INFO("New pair:{} <----> {}", pair->id(), "");
     }

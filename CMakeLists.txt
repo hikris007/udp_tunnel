@@ -30,6 +30,8 @@ add_executable(
         module/logger/Logger.cpp
         module/tunnel/TunnelFactory.cpp
         module/tunnel/LibhvWsTunnel/Client.cpp
+        module/tunnel/LibhvWsTunnel/Server.cpp
+        module/listener/libhvWsListener/LibhvWsListener.cpp
 )
 
 

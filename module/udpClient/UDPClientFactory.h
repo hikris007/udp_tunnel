@@ -8,7 +8,7 @@
 
 class UDPClientFactory {
 public:
-    static void createUDPClient();
+    static int createUDPClient();
 };
 
 

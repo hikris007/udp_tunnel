@@ -7,6 +7,8 @@
 
 #include "../../header/AppContext.h"
 #include "../serverPairManager/ServerPairManager.h"
+#include "../listener/Listener.h"
+#include "../listener/ListenerFactory.h"
 
 namespace omg {
 
@@ -18,8 +20,12 @@ namespace omg {
         int shutdown();
 
     private:
+        bool _isRunning = false;
+        std::mutex _runMutex;
+
         AppContext* _appContext = nullptr;
         hv::EventLoopPtr _eventLoop = nullptr;
+        ListenerPtr _listener;
         std::shared_ptr<ServerPairManager> _serverPairManager = nullptr;
     };
 }

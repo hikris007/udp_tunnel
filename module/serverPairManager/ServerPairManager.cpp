@@ -12,8 +12,7 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext) {
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
 
         std::weak_ptr<Tunnel> tunnelPtr = serverPairContext->_tunnel;
-        if(tunnelPtr.expired())
-            return;
+        if(tunnelPtr.expired()) return;
 
         tunnelPtr.lock()->send(payload, length);
     };
@@ -22,12 +21,12 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext) {
         // 获取上下文
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
 
-        UDPClientPtr udpClient = serverPairContext->_udpClient;
-        return udpClient->send(payload, len);
+        std::shared_ptr<hv::UdpClient> udpClient = serverPairContext->_udpClient;
+        return udpClient->sendto(payload, len);
     };
 }
 
-void ServerPairManager::onTunnelOpen(TunnelPtr tunnelPtr) {
+void omg::ServerPairManager::onTunnelOpen(TunnelPtr tunnelPtr) {
     // 注册事件
     tunnelPtr->onReceive = [this](TunnelPtr tunnel, const Byte* payload, size_t len){
         this->onSend(tunnel, payload, len);
@@ -36,30 +35,31 @@ void ServerPairManager::onTunnelOpen(TunnelPtr tunnelPtr) {
     this->_tunnels.insert({ tunnelPtr->id(), tunnelPtr });
 }
 
-SizeT ServerPairManager::onSend(TunnelPtr tunnel, const Byte *payload, size_t len) {
-    if(payload == nullptr || len < (sizeof(PairID) + 1))
+size_t omg::ServerPairManager::onSend(TunnelPtr tunnel, const Byte *payload, size_t length) {
+    if(payload == nullptr || length < (sizeof(PairID) + 1))
         return 0;
 
+    // 获取 PairID && 根据 PairID 获取 Pair
     PairID pairID = INVALID_PAIR_ID;
     memcpy(&pairID, payload, sizeof(PairID));
 
-    ServerTunnelContextPtr serverTunnelContext = tunnel->getContextPtr<ServerTunnelContext>();
-
+    omg::ServerTunnelContextPtr serverTunnelContext = tunnel->getContextPtr<omg::ServerTunnelContext>();
     PairPtr pair = serverTunnelContext->getPair(pairID);
 
+    // 如果没有就创建
     if(pair == nullptr){
         this->createPair(pairID, pair);
         serverTunnelContext->addPair(pair);
     }
 
-    return pair->send(payload + sizeof(PairID), len - sizeof(PairID));
+    return pair->send(payload + sizeof(PairID), length - sizeof(PairID));
 }
 
-Int ServerPairManager::createPair(PairID pairID, PairPtr& pairPtr) {
+int omg::ServerPairManager::createPair(PairID pairID, PairPtr& pairPtr) {
     PairPtr pair = std::make_shared<Pair>(pairID);
 
     // TODO: 注册事件
-    pair->handleSend = this->handleSend;
+    pair->sendHandler = this->handleSend;
 
     // 创建上下文 & 设置上下文
     ServerPairContextPtr serverPairContext = std::make_shared<ServerPairContext>();

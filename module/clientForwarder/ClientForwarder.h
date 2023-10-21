@@ -52,7 +52,7 @@ namespace omg {
          * @return 成功发送的长度
          */
 //        size_t onSend(const std::string& sourceAddress, const Byte* payload, size_t length);
-        size_t onSend(const sockaddr* sourceAddress, const Byte* payload, size_t length);
+        size_t onSend(const struct sockaddr* sourceAddress, const Byte* payload, size_t length);
 
         /*!
          * 处理从服务端发回来的数据(线程安全)

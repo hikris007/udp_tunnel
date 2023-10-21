@@ -74,8 +74,10 @@ int omg::Client::init() {
 
     // 当从本地接收到包就写入处理
     this->_udpServer->onMessage = [this](const hv::SocketChannelPtr& channel, hv::Buffer* buffer){
+        sockaddr* sourceSocketAddress = hio_peeraddr(channel->io_);
+        channel->peeraddr();
         this->_clientForwarder->onSend(
-                channel->peeraddr(),
+                sourceSocketAddress,
                 static_cast<const Byte*>(buffer->data()),
                 buffer->size()
         );

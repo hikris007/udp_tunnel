@@ -4,18 +4,38 @@
 
 #include "Server.h"
 
-omg::Server::Server(AppContext* appContext) {
-    this->_appContext = appContext;
-
-    this->_serverPairManager = std::make_shared<ServerPairManager>(this->_eventLoop, this->_appContext);
+omg::Server::Server(AppContext* appContext)
+    : _appContext(appContext),
+      _eventLoop(std::make_shared<hv::EventLoop>()),
+      _serverPairManager(std::make_shared<ServerPairManager>(this->_appContext))
+{
+    omg::ListenerFactory::getInstance().createListener(
+            this->_appContext->transportProtocol,
+            this->_appContext->serverConfig->listenDescription,
+            this->_listener
+    );
 }
 
-// TODO:
 int omg::Server::shutdown() {
+    if(!this->_isRunning) return -1;
+
+    this->_listener->stop();
+    this->_isRunning = false;
+
     return 0;
 }
 
-// TODO:
-int Server::run() {
+int omg::Server::run() {
+    if(this->_isRunning) return -1;
+
+    std::lock_guard<std::mutex> lockGuard(this->_runMutex);
+
+    this->_listener->onAccept = [this](TunnelPtr tunnel){
+        this->_serverPairManager->onTunnelOpen(std::move(tunnel));
+    };
+
+    this->_listener->start(this->_appContext->serverConfig->listenDescription);
+
+    this->_isRunning = true;
     return 0;
 }

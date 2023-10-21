@@ -6,6 +6,7 @@
 #define UDP_TUNNEL_SOCKET_H
 #include <string>
 #include <regex>
+#include "city.h"
 #include "../../header/typedef.h"
 
 namespace omg {
@@ -48,11 +49,11 @@ namespace omg {
              * @return 错误码
              * 0成功，非0失败
              */
-            static int parseIPAddress(const std::string& ipAddress, sockaddr_u* sockaddrU){
+            static int ParseIPAddress(const std::string& ipAddress, sockaddr_u* sockaddrU){
                 std::string ip;
                 int port;
 
-                int errCode = splitIPAddress(ipAddress, ip, port);
+                int errCode = SplitIPAddress(ipAddress, ip, port);
                 if(errCode != 0)
                     return errCode;
 
@@ -71,7 +72,7 @@ namespace omg {
              * @param port 存放端口结果
              * @return ParseErrorCode
              */
-            static int splitIPAddress(const std::string& address, std::string& ip, int& port) {
+            static int SplitIPAddress(const std::string& address, std::string& ip, int& port) {
                 // 正则表达式匹配 IPv4 或 IPv6 地址
                 std::regex ipv4Regex(R"((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+))");
                 std::regex ipv6Regex(R"((\[[a-fA-F0-9:]+\]):(\d+))");

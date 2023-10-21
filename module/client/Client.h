@@ -8,6 +8,7 @@
 #include <chrono>
 #include "hv/EventLoop.h"
 #include "hv/UdpServer.h"
+#include "hv/hloop.h"
 #include "../../header/AppContext.h"
 #include "../clientForwarder/ClientForwarder.h"
 #include "../logger/Logger.h"

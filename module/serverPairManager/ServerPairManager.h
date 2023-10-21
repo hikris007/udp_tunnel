@@ -10,9 +10,9 @@
 
 #include "../tunnel/Tunnel.h"
 #include "../udpClient/UDPClientFactory.h"
-#include "../pair/Pair.h"
 #include "../../header/AppContext.h"
 #include "../context/ServerPairContext.h"
+#include "../context/ServerTunnelContext.h"
 
 namespace omg {
     class ServerPairManager {
@@ -28,7 +28,7 @@ namespace omg {
     protected:
     private:
         // 包装
-        std::function<size_t(const PairPtr pair,const Byte* payload, size_t len)> handleSend = nullptr;
+        std::function<size_t(const PairPtr pair,const Byte* payload, size_t length)> handleSend = nullptr;
         std::function<void(const PairPtr&, const Byte* payload, size_t length)> onReceive = nullptr;
 
         AppContext* _appContext = nullptr;

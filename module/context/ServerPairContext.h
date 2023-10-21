@@ -5,12 +5,13 @@
 #ifndef UDP_TUNNEL_SERVERPAIRCONTEXT_H
 #define UDP_TUNNEL_SERVERPAIRCONTEXT_H
 
+#include "hv/UdpClient.h"
 #include "../tunnel/Tunnel.h"
 
 namespace omg {
     class ServerPairContext {
     public:
-        void* _udpClient = nullptr;
+        std::shared_ptr<hv::UdpClient> _udpClient = nullptr;
         std::weak_ptr<Tunnel> _tunnel;
     };
 

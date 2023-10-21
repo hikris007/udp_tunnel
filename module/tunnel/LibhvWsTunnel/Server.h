@@ -1,17 +1,17 @@
 //
-// Created by Kris Allen on 2023/10/17.
+// Created by Kris on 2023/10/21.
 //
 
-#ifndef UDP_TUNNEL_LIBHV_WS_CLIENT_H
-#define UDP_TUNNEL_LIBHV_WS_CLIENT_H
+#ifndef UDP_TUNNEL_LIBHV_WS_SERVER_H
+#define UDP_TUNNEL_LIBHV_WS_SERVER_H
 
+#include "hv/WebSocketChannel.h"
 #include "../Tunnel.h"
-#include "hv/WebSocketClient.h"
 
 namespace omg {
-    class LibhvWsClientTunnel : public Tunnel, public std::enable_shared_from_this<LibhvWsClientTunnel>{
+class LibhvWsServerTunnel : public Tunnel, public std::enable_shared_from_this<LibhvWsServerTunnel>{
     public:
-        LibhvWsClientTunnel(hv::EventLoopPtr eventLoop, std::string  url, TunnelID tunnelID);
+        LibhvWsServerTunnel(TunnelID tunnelID, WebSocketChannelPtr webSocketChannel);
 
         int destroy() override;
         size_t send(const omg::Byte *payload, omg::size_t len) override;
@@ -34,18 +34,14 @@ namespace omg {
     private:
         StateResult _state;
         TunnelID _tunnelID;
-        std::string _url;
 
-        std::unique_ptr<hv::WebSocketClient> _webSocketClient = nullptr;
-        reconn_setting_t _reconnSetting;
+        std::weak_ptr<hv::WebSocketChannel> _webSocketChannel;
 
-        CallBackManager<const TunnelPtr&> _onReadyCallbacks;
         CallBackManager<const TunnelPtr&, void*> _onErrorCallbacks;
         CallBackManager<const TunnelPtr&> _onDestroyCallbacks;
 
         std::mutex _stateMutex;
-
     };
 }
 
-#endif //UDP_TUNNEL_LIBHV_WS_CLIENT_H
+#endif //UDP_TUNNEL_LIBHV_WS_SERVER_H

@@ -5,6 +5,7 @@
 #ifndef UDP_TUNNEL_SERVERTUNNELCONTEXT_H
 #define UDP_TUNNEL_SERVERTUNNELCONTEXT_H
 
+#include <unordered_map>
 #include "../pair/Pair.h"
 
 namespace omg {
