@@ -166,7 +166,7 @@ int main(){
     std::shared_ptr<omg::LibhvWsListener> listener = std::make_shared<omg::LibhvWsListener>(eventLoop);
 
     listener->onAccept = [](const omg::TunnelPtr& tunnel){
-        std::cout << "New Tunnel" << std::endl;
+        std::cout << "New Tunnel:" << tunnel->id() << std::endl;
 
         tunnel->onReceive = [](const omg::TunnelPtr& tunnel, const omg::Byte* payload, size_t len){
             std::cout << "New data length:" << len << std::endl;

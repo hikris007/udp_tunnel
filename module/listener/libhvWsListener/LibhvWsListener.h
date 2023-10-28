@@ -11,6 +11,7 @@
 #include "../../utils/socket.hpp"
 #include "../../tunnel/LibhvWsTunnel/Server.h"
 #include "../Listener.h"
+#include "../../tunnelIDPool/TunnelIDPool.h"
 
 /*
  * Tunnel ----------- shared_ptr ----------- WebsocketChannel
@@ -25,7 +26,7 @@ namespace omg {
 
     class LibhvWsListener : public Listener {
     public:
-        LibhvWsListener(hv::EventLoopPtr eventLoop);
+        explicit LibhvWsListener(hv::EventLoopPtr eventLoop);
         int start(std::string listenAddress) override;
         int stop() override;
 
@@ -35,7 +36,11 @@ namespace omg {
         hv::WebSocketService _webSocketService{};
         std::shared_ptr<hv::WebSocketServer> _webSocketServer;
 
+        std::mutex _runMutex;
         std::string _listenAddress;
+        bool _isRunning = false;
+
+        TunnelIDPool _tunnelIDPool;
     };
 }
 

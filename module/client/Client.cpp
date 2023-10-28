@@ -54,7 +54,7 @@ int omg::Client::init() {
     std::string ip;
     int port;
 
-    int errCode = utils::Socket::splitIPAddress(
+    int errCode = utils::Socket::SplitIPAddress(
             this->_appContext->clientConfig->listenDescription,
             ip,
             port

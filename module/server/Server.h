@@ -9,6 +9,7 @@
 #include "../serverPairManager/ServerPairManager.h"
 #include "../listener/Listener.h"
 #include "../listener/ListenerFactory.h"
+#include "../logger/Logger.h"
 
 namespace omg {
 
@@ -22,6 +23,7 @@ namespace omg {
     private:
         bool _isRunning = false;
         std::mutex _runMutex;
+        std::mutex _shutdownMutex;
 
         AppContext* _appContext = nullptr;
         hv::EventLoopPtr _eventLoop = nullptr;

@@ -15,12 +15,19 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 add_executable(udp_tunnel
         module/client/Client.cpp
+        module/server/Server.cpp
+        module/listener/ListenerFactory.cpp
+        module/listener/libhvWsListener/LibhvWsListener.cpp
+        module/tunnel/LibhvWsTunnel/Server.cpp
         module/clientForwarder/ClientForwarder.cpp
         module/clientPairManager/ClientPairManager.cpp
         module/logger/Logger.cpp
         module/pair/Pair.cpp
         module/tunnel/TunnelFactory.cpp
         module/tunnel/LibhvWsTunnel/Client.cpp
+        module/serverPairManager/ServerPairManager.cpp
+        module/tunnelIDPool/TunnelIDPool.cpp
+        module/udpClient/UDPClientFactory.cpp
         main.cpp
         )
 add_executable(
@@ -32,6 +39,9 @@ add_executable(
         module/tunnel/LibhvWsTunnel/Client.cpp
         module/tunnel/LibhvWsTunnel/Server.cpp
         module/listener/libhvWsListener/LibhvWsListener.cpp
+        module/tunnelIDPool/TunnelIDPool.cpp
+        module/serverPairManager/ServerPairManager.cpp
+        module/udpClient/UDPClientFactory.cpp
 )
 
 

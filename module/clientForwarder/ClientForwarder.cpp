@@ -65,7 +65,7 @@ size_t omg::ClientForwarder::onSend(const struct sockaddr* sourceAddress, const 
 
         clientPairContext->_sourceAddress = source;
         this->_sourceAddressMap.insert({ sockAddrHash, pair });
-        LOGGER_INFO("New pair:{} <----> {}", pair->id(), "");
+        LOGGER_INFO("New pair:{} <----> {}", pair->id(), clientPairContext->_sourceAddress);
     }
 
     // 写入数据

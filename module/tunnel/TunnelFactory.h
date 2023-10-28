@@ -9,7 +9,7 @@
 #include <mutex>
 #include "Tunnel.h"
 #include "../../header/typedef.h"
-
+#include "../tunnelIDPool/TunnelIDPool.h"
 #include "LibhvWsTunnel/Client.h"
 
 namespace omg {
@@ -30,25 +30,16 @@ namespace omg {
         void setEventLoopPtr(hv::EventLoopPtr eventLoop);
         void deleteEventLoopPtr();
 
-    protected:
-        void putTunnelID(TunnelID tunnelID);
-        TunnelID getTunnelID();
-
     private:
         // 私有构造函数，确保外部无法创建新实例
         TunnelFactory();
 
         TunnelPtr createWsTunnel(const std::string& endpoint);
-        void initIDPool();
 
     private:
         hv::EventLoopPtr _eventLoop;
 
-        std::queue<TunnelID> _tunnelIDPool;
-        std::mutex _poolLocker;
-
-        TunnelID _lastTunnelID = INVALID_TUNNEL_ID + 1;
-        size_t _poolSize = 100;
+        TunnelIDPool _tunnelIDPool;
     };
 
 }

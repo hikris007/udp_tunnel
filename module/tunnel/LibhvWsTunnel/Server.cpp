@@ -67,7 +67,10 @@ int omg::LibhvWsServerTunnel::destroy() {
     return 0;
 }
 
-HANDLER_ID omg::LibhvWsServerTunnel::addOnReadyHandler(omg::OnReadyCallback onReadyCallback) {}
+HANDLER_ID omg::LibhvWsServerTunnel::addOnReadyHandler(omg::OnReadyCallback onReadyCallback) {
+    return -1;
+}
+
 void omg::LibhvWsServerTunnel::removeOnReadyHandler(HANDLER_ID handlerID) {}
 
 HANDLER_ID omg::LibhvWsServerTunnel::addOnErrorHandler(omg::OnErrorCallback onErrorCallback) {

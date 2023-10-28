@@ -14,7 +14,9 @@
 
 struct SockAddrHasher {
     size_t operator()(const sockaddr_u& addr) const {
-        return omg::utils::Socket::GenerateSockAddrHash(addr);
+        size_t hash = 0;
+        omg::utils::Socket::GenerateSockAddrHash(addr, hash);
+        return hash;
     }
 };
 

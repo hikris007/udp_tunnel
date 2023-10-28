@@ -7,7 +7,7 @@
 #include "CLI/CLI.hpp"
 
 // 自己的文件
-//#include "module/server/Server.h"
+#include "module/server/Server.h"
 #include "module/client/Client.h"
 #include "header/AppContext.h"
 
@@ -16,7 +16,7 @@ omg::ClientConfig clientConfig;
 
 omg::AppContext appContext;
 
-//std::shared_ptr<omg::Server> serverPtr = nullptr;
+std::shared_ptr<omg::Server> serverPtr = nullptr;
 std::shared_ptr<omg::Client> clientPtr = nullptr;
 
 void handleSystemSignal(int signal);
@@ -58,19 +58,19 @@ int main(int argc, char** argv) {
 
     omg::TransportProtocol transportProtocol = transportProtocolMap[transportProtocolStr];
 
-//    if(serverMode){
-//        appContext.runMode = omg::RunMode::SERVER;
-//
-//        appContext.serverConfig->transportProtocol = transportProtocol;
-//        appContext.serverConfig->endpoint = endpoint;
-//        appContext.serverConfig->listenDescription = listenDescription;
-//
-//        // 业务
-//        serverPtr = std::make_shared<omg::Server>(&appContext);
-//        std::signal(SIGINT, handleSystemSignal);
-//
-//        serverPtr->run();
-//    }
+    if(serverMode){
+        appContext.runMode = omg::RunMode::SERVER;
+
+        appContext.serverConfig->transportProtocol = transportProtocol;
+        appContext.serverConfig->endpoint = endpoint;
+        appContext.serverConfig->listenDescription = listenDescription;
+
+        // 业务
+        serverPtr = std::make_shared<omg::Server>(&appContext);
+        std::signal(SIGINT, handleSystemSignal);
+
+        serverPtr->run();
+    }
 
     if(clientMode){
         appContext.runMode = omg::RunMode::CLIENT;
@@ -93,13 +93,13 @@ int main(int argc, char** argv) {
 }
 
 void handleSystemSignal(int signal){
-//    if(appContext.runMode == omg::RunMode::SERVER){
-//        if(serverPtr == nullptr)
-//            return;
-//
-//        serverPtr->shutdown();
-//        exit(0);
-//    }
+    if(appContext.runMode == omg::RunMode::SERVER){
+        if(serverPtr == nullptr)
+            return;
+
+        serverPtr->shutdown();
+        exit(0);
+    }
 
     if(appContext.runMode == omg::RunMode::CLIENT){
         if(clientPtr == nullptr)

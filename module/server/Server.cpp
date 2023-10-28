@@ -7,7 +7,7 @@
 omg::Server::Server(AppContext* appContext)
     : _appContext(appContext),
       _eventLoop(std::make_shared<hv::EventLoop>()),
-      _serverPairManager(std::make_shared<ServerPairManager>(this->_appContext))
+      _serverPairManager(std::make_shared<ServerPairManager>(this->_appContext, this->_eventLoop))
 {
     omg::ListenerFactory::getInstance().createListener(
             this->_appContext->transportProtocol,
@@ -19,6 +19,7 @@ omg::Server::Server(AppContext* appContext)
 int omg::Server::shutdown() {
     if(!this->_isRunning) return -1;
 
+    std::lock_guard<std::mutex> lockGuard(this->_shutdownMutex);
     this->_listener->stop();
     this->_isRunning = false;
 
@@ -37,5 +38,7 @@ int omg::Server::run() {
     this->_listener->start(this->_appContext->serverConfig->listenDescription);
 
     this->_isRunning = true;
+    LOGGER_WARN("The server is running on {}.", this->_appContext->serverConfig->listenDescription);
+
     return 0;
 }
