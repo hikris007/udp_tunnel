@@ -85,7 +85,7 @@ int omg::LibhvWsListener::start(std::string listenAddress) {
     this->_webSocketServer->setHost(ip.c_str());
     this->_webSocketServer->setPort(port);
 
-    this->_webSocketServer->run();
+    this->_webSocketServer->run(false);
     this->_isRunning = true;
 
     return 0;

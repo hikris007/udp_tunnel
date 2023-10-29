@@ -14,8 +14,6 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext, hv::EventLoopP
         if(payload == nullptr || length < 1)
             return;
 
-
-
         // 获取上下文
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
         std::lock_guard<std::mutex> lockGuard(serverPairContext->_dataMutex);
@@ -31,7 +29,7 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext, hv::EventLoopP
         tunnel->send(serverPairContext->_data, sizeof(PairID)+length);
     };
 
-    this->pairSendHandler = [this](const PairPtr pair,const Byte* payload, size_t len){
+    this->pairSendHandler = [this](const PairPtr& pair,const Byte* payload, size_t len){
         // 获取上下文
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
 
@@ -111,7 +109,10 @@ size_t omg::ServerPairManager::onSend(TunnelPtr tunnel, const Byte *payload, siz
     if(pair == nullptr){
         this->createPair(tunnel, pairID, pair);
         serverTunnelContext->addPair(pair);
-        LOGGER_INFO("New pair:{} <----> {}", pair->id(), "");
+
+        ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
+        if(serverPairContext == nullptr || serverPairContext->_udpClient == nullptr)return -1;
+        LOGGER_INFO("New pair:{} <----> {}", pair->id(), serverPairContext->_udpClient->channel->peeraddr());
     }
 
     return pair->send(payload + sizeof(PairID), length - sizeof(PairID));
@@ -145,10 +146,12 @@ int omg::ServerPairManager::createPair(TunnelPtr tunnel, PairID pairID, PairPtr&
     ServerPairContextPtr serverPairContext = std::make_shared<ServerPairContext>();
 
     serverPairContext->_udpClient = udpClient;
-    serverPairContext->_tunnel = tunnel;
+    serverPairContext->_tunnel = std::move(tunnel);
     memcpy(serverPairContext->_data, &pairID, sizeof(PairID));
 
     pair->setContextPtr(serverPairContext);
+
+    udpClient->start();
 
     pairPtr = pair;
     return 0;

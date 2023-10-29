@@ -22,7 +22,7 @@ int omg::Server::shutdown() {
     std::lock_guard<std::mutex> lockGuard(this->_shutdownMutex);
     this->_listener->stop();
     this->_isRunning = false;
-
+    LOGGER_WARN("The server is shutdown.");
     return 0;
 }
 

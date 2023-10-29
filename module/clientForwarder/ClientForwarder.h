@@ -11,6 +11,7 @@
 #include "hv/hsocket.h"
 #include "../clientPairManager/ClientPairManager.h"
 #include "../utils/socket.hpp"
+#include "../utils/time.hpp"
 
 struct SockAddrHasher {
     size_t operator()(const sockaddr_u& addr) const {

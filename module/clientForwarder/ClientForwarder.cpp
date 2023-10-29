@@ -26,7 +26,7 @@ omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientP
 size_t omg::ClientForwarder::onSend(const struct sockaddr* sourceAddress, const Byte *payload, size_t length) {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
-    int errCode = -1;
+    int errCode = 0;
     size_t sockAddrHash = -1;
     PairPtr pair = nullptr;
 
@@ -50,6 +50,8 @@ size_t omg::ClientForwarder::onSend(const struct sockaddr* sourceAddress, const 
 
         // 注册关闭回调
         pair->addOnCloseHandler(this->onPairClose);
+
+        LOGGER_INFO("Pair (id: {}) has created", pair->id());
     }else{
         pair = iterator->second;
     }
@@ -59,14 +61,22 @@ size_t omg::ClientForwarder::onSend(const struct sockaddr* sourceAddress, const 
 
     // 如果是新添加的 Pair 则设置一些信息
     if(iterator == this->_sourceAddressMap.end()){
+
         // 把地址转换成 IP:Port 格式
         char buf[SOCKADDR_STRLEN] = {0};
         std::string source = SOCKADDR_STR(sourceAddress, buf);
 
+        // 设置源地址信息
+        memcpy(&clientPairContext->_sourceAddressSockAddr, sourceAddress, sizeof(sockaddr_u));
         clientPairContext->_sourceAddress = source;
+
+        // 把源地址和 Pair 关联
         this->_sourceAddressMap.insert({ sockAddrHash, pair });
-        LOGGER_INFO("New pair:{} <----> {}", pair->id(), clientPairContext->_sourceAddress);
+        LOGGER_INFO("Pair (id: {}) map to {}", pair->id(), clientPairContext->_sourceAddress);
     }
+
+    // 记录最后发送时间
+    clientPairContext->_lastDataSentTime = utils::Time::GetCurrentTs();
 
     // 写入数据
     return pair->send(payload, length);

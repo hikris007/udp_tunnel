@@ -61,15 +61,27 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     this->onPairCloseHandler = [this](const PairPtr& pair) -> void{
         // 获取上下文
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+        if(clientPairContext == nullptr){
+            LOGGER_INFO("Failed to get context of pair (id :{}), context is null", pair->id());
+            return;
+        }
 
         // 从上下文中获取所属的隧道 & 上下文
         TunnelPtr tunnel = clientPairContext->tunnel;;
-        if(tunnel == nullptr) return;
+        if(tunnel == nullptr){
+            LOGGER_INFO("Failed to get owner tunnel (pair id :{}), tunnel ptr in context is null", pair->id());
+            return;
+        };
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+        if(clientTunnelContext == nullptr){
+            LOGGER_INFO("Failed to get context of owner tunnel (pair id :{}), context of owner tunnel is null", pair->id());
+            return;
+        }
 
         // 解除关联 & 释放 PairID
         clientTunnelContext->putSeatNumber(pair->id());
         clientTunnelContext->removePair(pair);
+        LOGGER_INFO("Pair (id: {}) is release seat number: {}, owner tunnel id: {}", pair->id(), pair->id(), tunnel->id());
     };
 
     /*!
@@ -78,9 +90,14 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     this->onTunnelDestroy = [this](const TunnelPtr& tunnel){
         // 获取上下文
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+        if(clientTunnelContext == nullptr){
+            LOGGER_INFO("Failed to get tunnel's context, tunnel id: {}", tunnel->id());
+            return;
+        }
 
         // 遍历关闭 Pair
-        clientTunnelContext->foreachPairs([](const PairPtr& pair){
+        clientTunnelContext->foreachPairs([&tunnel](const PairPtr& pair){
+            LOGGER_INFO("Pair (id :{}) is ready to close, because owner tunnel (id: {}) is close", pair->id(), tunnel->id());
             pair->close();
         });
 
@@ -104,9 +121,14 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     this->onTunnelError = [this](const TunnelPtr& tunnel, void* data){
         // 获取上下文
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+        if(clientTunnelContext == nullptr){
+            LOGGER_INFO("Failed to get tunnel's context, tunnel id: {}", tunnel->id());
+            return;
+        }
 
         // 遍历关闭 Pair
-        clientTunnelContext->foreachPairs([](const PairPtr& pair){
+        clientTunnelContext->foreachPairs([&tunnel](const PairPtr& pair){
+            LOGGER_INFO("Pair (id :{}) is ready to close, because owner tunnel (id: {}) an error occurred", pair->id(), tunnel->id());
             pair->close();
         });
 
@@ -154,7 +176,7 @@ int omg::ClientPairManager::createTunnel() {
     this->_tunnelPairCounter.insert({tunnelID, 0});
     this->_availableTunnelIDs.push_back(tunnelID);
 
-    LOGGER_INFO("New tunnel:{}", tunnelPtr->id());
+    LOGGER_INFO("Tunnel (id: {}) has created", tunnelPtr->id());
     return 0;
 }
 
@@ -162,7 +184,10 @@ int omg::ClientPairManager::createPair(PairPtr& outputPair) {
     // 如果没有可用的隧道就先创建
     if(this->_availableTunnelIDs.empty()){
         int errCode = this->createTunnel();
-        if(errCode != 0) return -1;
+        if(errCode != 0) {
+            LOGGER_WARN("Failed to create tunnel, error code: {}", errCode);
+            return -1;
+        }
     }
 
     std::lock_guard<std::mutex> lockGuard(this->_locker);

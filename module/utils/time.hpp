@@ -8,7 +8,7 @@ namespace omg {
     namespace utils {
         class Time {
         public:
-            static uint64 getCurrentTs() {
+            static uint64 GetCurrentTs() {
                 auto now = std::chrono::system_clock::now();
 
                 auto epoch_time = now.time_since_epoch();

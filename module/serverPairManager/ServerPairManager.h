@@ -29,7 +29,7 @@ namespace omg {
     protected:
     private:
         // 包装
-        std::function<size_t(const PairPtr pair,const Byte* payload, size_t length)> pairSendHandler = nullptr;
+        std::function<size_t(const PairPtr& pair,const Byte* payload, size_t length)> pairSendHandler = nullptr;
         std::function<void(const PairPtr&, const Byte* payload, size_t length)> pairReceiveHandler = nullptr;
         std::function<void(const PairPtr& pair)> pairCloseHandler = nullptr;
 

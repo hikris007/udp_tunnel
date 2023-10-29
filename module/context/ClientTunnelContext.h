@@ -85,7 +85,7 @@ namespace omg {
             std::lock_guard<std::mutex> lockGuard(this->_locker);
 
             for(auto & iterator : this->_pairs){
-                if(!iterator.second.expired())
+                if(iterator.second.expired())
                     return;
 
                 PairPtr pair = iterator.second.lock();

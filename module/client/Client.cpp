@@ -17,32 +17,56 @@ omg::Client::Client(AppContext *config) {
 
 void omg::Client::garbageCollection() {
     std::lock_guard<std::mutex> lockGuard(this->_gcMutex);
-    LOGGER_INFO("garbageCollection start.");
-    auto pairHandler = [this](PairPtr& pair){
+
+    LOGGER_DEBUG("GC start running");
+
+    int tunnelCount = 0;
+    int pairCount = 0;
+    int cleanPairCount = 0;
+
+    auto pairHandler = [this, &pairCount, &cleanPairCount](PairPtr& pair){
+        pairCount++;
+
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+        if(clientPairContext == nullptr){
+            LOGGER_DEBUG("Pair's context is null, pair id: {}", tunnel->id());
+            return;
+        }
 
         // 当前时间戳(毫秒)
-        size_t cts = omg::utils::Time::getCurrentTs();
+        size_t cts = omg::utils::Time::GetCurrentTs();
 
         // 差
         size_t sinceLastWrite = cts - clientPairContext->_lastDataSentTime;
         size_t sinceLastReceived = cts - clientPairContext->_lastDataReceivedTime;
+        LOGGER_DEBUG("Pair last activity time, sinceLastWrite: {}, sinceLastReceived:{}, pair id: {}", sinceLastWrite, sinceLastReceived, pair->id());
 
         // 超时就关闭
         if(sinceLastWrite > this->_appContext->writeTimeout || sinceLastReceived > this->_appContext->receiveTimeout){
+            LOGGER_DEBUG("Clean pair, id: {}",  pair->id());
+
             pair->close();
+            cleanPairCount++;
         }
     };
 
-    auto handler = [&pairHandler](const TunnelPtr& tunnel){
+    auto handler = [&pairHandler, &tunnelCount](const TunnelPtr& tunnel){
+        tunnelCount++;
+
         // 获取 Tunnel 上下文
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+        if(clientTunnelContext == nullptr){
+            LOGGER_DEBUG("Tunnel's context is null, tunnel id: {}", tunnel->id());
+            return;
+        }
 
         // 遍历 Pair
+        LOGGER_DEBUG("Foreach pairs of tunnel, tunnel id: {}", tunnel->id());
         clientTunnelContext->foreachPairs(pairHandler);
     };
-    LOGGER_INFO("garbageCollection end.");
+
+    LOGGER_DEBUG("GC finished, tunnel count: {}, success to clean {}/{} pairs", tunnelCount, pairCount, cleanPairCount);
 
     this->_clientPairManager->foreachTunnels(handler);
 }
@@ -75,7 +99,6 @@ int omg::Client::init() {
     // 当从本地接收到包就写入处理
     this->_udpServer->onMessage = [this](const hv::SocketChannelPtr& channel, hv::Buffer* buffer){
         sockaddr* sourceSocketAddress = hio_peeraddr(channel->io_);
-        channel->peeraddr();
         this->_clientForwarder->onSend(
                 sourceSocketAddress,
                 static_cast<const Byte*>(buffer->data()),
@@ -90,6 +113,9 @@ int omg::Client::init() {
 
         // 从上下文中获取源地址
         sockaddr_u* sourceAddress = &clientPairContext->_sourceAddressSockAddr;
+
+        // 记录最后收到数据的时间
+        clientPairContext->_lastDataReceivedTime = utils::Time::GetCurrentTs();
 
         // 写回去
         return this->_udpServer->sendto(
@@ -119,6 +145,7 @@ int omg::Client::run() {
     this->gcTimerID = this->_eventLoop->setInterval(1000 * 10, [this](hv::TimerID timerID){
         this->garbageCollection();
     });
+    LOGGER_WARN("GC is running, timer id: {}", this->gcTimerID);
 
     // 开始
     this->_udpServer->start();
@@ -138,6 +165,8 @@ int omg::Client::shutdown() {
     // 停止 GC 清理
     if(this->gcTimerID != INVALID_TIMER_ID){
         this->_eventLoop->killTimer(this->gcTimerID);
+        LOGGER_WARN("GC is stopped, timer id: {}", this->gcTimerID);
+
         this->gcTimerID = INVALID_TIMER_ID;
     }
 

@@ -25,6 +25,7 @@ namespace omg {
 
         std::shared_ptr<hv::UdpClient> _udpClient = nullptr;
         TunnelPtr _tunnel = nullptr;
+
         Byte* _data = nullptr;
         std::mutex _dataMutex;
     };
