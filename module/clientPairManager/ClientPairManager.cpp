@@ -24,15 +24,15 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
 
         // 根据 PairID 找到 Pair
         // 如果找不到 Pair 则丢弃
-        PairPtr pair = nullptr;
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+        if(clientTunnelContext == nullptr) return;
+
+        PairPtr pair = nullptr;
         clientTunnelContext->getPair(pairID, pair);
-        if(pair == nullptr)
-            return;
+        if(pair == nullptr) return;
 
         // 如果没有接收处理函数也丢弃
-        if(!pair->onReceive)
-            return;
+        if(!pair->onReceive) return;
 
         pair->onReceive(pair, payload+sizeof(PairID), length - sizeof(PairID));
     };
@@ -43,16 +43,15 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     this->pairSendHandler = [this](const PairPtr& pair, const Byte* payload, size_t length) -> omg::size_t {
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+        if(clientPairContext == nullptr) return -1;
 
         // 从上下文中获取所属的隧道
         // 如果没成功就返回 放弃写入
         TunnelPtr tunnel = clientPairContext->tunnel;
-        if(tunnel == nullptr)
-            return -1;
+        if(tunnel == nullptr) return -1;
 
         // 状态是成功连接才写入数据
-        if(tunnel->state().current != Tunnel::CONNECTED)
-            return -1;
+        if(tunnel->state().current != Tunnel::CONNECTED) return -1;
 
         return tunnel->send(payload, length);
     };
@@ -102,20 +101,7 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         });
 
         // 从本地 Tunnels 移除
-        std::lock_guard<std::mutex> lockGuard(this->_locker);
-
-        auto iterator = std::find(this->_availableTunnelIDs.begin(), this->_availableTunnelIDs.end(), tunnel->id());
-        if(iterator != this->_availableTunnelIDs.end())
-            this->_availableTunnelIDs.erase(iterator);
-
-        auto iterator2 = this->_tunnelPairCounter.find(tunnel->id());
-        if(iterator2 != this->_tunnelPairCounter.end())
-            this->_tunnelPairCounter.erase(iterator2);
-
-        auto iterator3 = this->_tunnels.find(tunnel->id());
-        if(iterator3 != this->_tunnels.end())
-            this->_tunnels.erase(iterator3);
-
+        this->removeTunnel(tunnel->id());
     };
 
     this->onTunnelError = [this](const TunnelPtr& tunnel, void* data){
@@ -133,19 +119,7 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         });
 
         // 从本地 Tunnels 移除
-        std::lock_guard<std::mutex> lockGuard(this->_locker);
-
-        auto iterator = std::find(this->_availableTunnelIDs.begin(), this->_availableTunnelIDs.end(), tunnel->id());
-        if(iterator != this->_availableTunnelIDs.end())
-            this->_availableTunnelIDs.erase(iterator);
-
-        auto iterator2 = this->_tunnelPairCounter.find(tunnel->id());
-        if(iterator2 != this->_tunnelPairCounter.end())
-            this->_tunnelPairCounter.erase(iterator2);
-
-        auto iterator3 = this->_tunnels.find(tunnel->id());
-        if(iterator3 != this->_tunnels.end())
-            this->_tunnels.erase(iterator3);
+        this->removeTunnel(tunnel->id());
     };
 }
 
@@ -153,30 +127,51 @@ int omg::ClientPairManager::createTunnel() {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     // 创建隧道
-    TunnelPtr tunnelPtr = TunnelFactory::getInstance().createTunnel(this->_clientConfig->transportProtocol, this->_clientConfig->endpoint);
-    if(tunnelPtr == nullptr)
-        return -1;
+    TunnelPtr tunnel = TunnelFactory::getInstance().createTunnel(
+            this->_clientConfig->transportProtocol,
+            this->_clientConfig->endpoint
+    );
+    if(tunnel == nullptr) return -1;
 
     // 注册事件
-    tunnelPtr->onReceive = this->onReceive;
-    tunnelPtr->addOnDestroyHandler(this->onTunnelDestroy);
-    tunnelPtr->addOnErrorHandler(this->onTunnelError);
+    tunnel->onReceive = this->onReceive;
+    tunnel->addOnDestroyHandler(this->onTunnelDestroy);
+    tunnel->addOnErrorHandler(this->onTunnelError);
 
     // 配置上下文 & 设置上下文
     ClientTunnelContextPtr clientTunnelContext = std::make_shared<ClientTunnelContext>(
           this->_clientConfig->carryingCapacity
     );
-    tunnelPtr->setContextPtr(clientTunnelContext);
+    tunnel->setContextPtr(clientTunnelContext);
 
     // 放入列表
-    TunnelID tunnelID = tunnelPtr->id();
-    this->_tunnels.insert({ tunnelID, tunnelPtr });
+    TunnelID tunnelID = tunnel->id();
+    this->_tunnels.insert({ tunnelID, tunnel });
 
     // 添加到计数列表 & 添加到可用隧道列表
     this->_tunnelPairCounter.insert({tunnelID, 0});
     this->_availableTunnelIDs.push_back(tunnelID);
 
-    LOGGER_INFO("Tunnel (id: {}) has created", tunnelPtr->id());
+    LOGGER_INFO("Tunnel (id: {}) has created", tunnel->id());
+    return 0;
+}
+
+int omg::ClientPairManager::removeTunnel(omg::TunnelID tunnelID) {
+    // 从本地 Tunnels 移除
+    std::lock_guard<std::mutex> lockGuard(this->_locker);
+
+    auto iterator = std::find(this->_availableTunnelIDs.begin(), this->_availableTunnelIDs.end(), tunnelID);
+    if(iterator != this->_availableTunnelIDs.end())
+        this->_availableTunnelIDs.erase(iterator);
+
+    auto iterator2 = this->_tunnelPairCounter.find(tunnelID);
+    if(iterator2 != this->_tunnelPairCounter.end())
+        this->_tunnelPairCounter.erase(iterator2);
+
+    auto iterator3 = this->_tunnels.find(tunnelID);
+    if(iterator3 != this->_tunnels.end())
+        this->_tunnels.erase(iterator3);
+
     return 0;
 }
 
@@ -194,10 +189,23 @@ int omg::ClientPairManager::createPair(PairPtr& outputPair) {
 
     // 获取第一个空闲隧道 & 上下文
     TunnelID tunnelID = this->_availableTunnelIDs.front();
+    if(tunnelID == INVALID_TUNNEL_ID) return -1;
+
     auto iterator = this->_tunnels.find(tunnelID);
+    if(iterator == this->_tunnels.end()) return -1;
 
     TunnelPtr tunnel = iterator->second;
+    if(tunnel == nullptr){
+        this->removeTunnel(tunnelID);
+        return -1;
+    }
+
+    // 正常来说隧道一定会有上下文 如果没有直接关了
     ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+    if(clientTunnelContext == nullptr){
+        tunnel->destroy();
+        return -1;
+    }
 
     // 创建 Pair
     PairID pairID = clientTunnelContext->takeSeatNumber();

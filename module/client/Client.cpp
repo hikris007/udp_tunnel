@@ -20,6 +20,8 @@ void omg::Client::garbageCollection() {
 
     LOGGER_DEBUG("GC start running");
 
+    size_t beginTimestamp = utils::Time::GetCurrentTs();
+    size_t endTimestamp = 0;
     int tunnelCount = 0;
     int pairCount = 0;
     int cleanPairCount = 0;
@@ -66,9 +68,16 @@ void omg::Client::garbageCollection() {
         clientTunnelContext->foreachPairs(pairHandler);
     };
 
-    LOGGER_DEBUG("GC finished, tunnel count: {}, success to clean {}/{} pairs", tunnelCount, pairCount, cleanPairCount);
-
     this->_clientPairManager->foreachTunnels(handler);
+    endTimestamp = utils::Time::GetCurrentTs();
+
+    LOGGER_INFO(
+            "GC finished， spend {}ms, tunnel count: {}, success to clean {}/{} pairs",
+            ( endTimestamp - beginTimestamp ),
+            tunnelCount,
+            pairCount,
+            cleanPairCount
+    );
 }
 
 int omg::Client::init() {

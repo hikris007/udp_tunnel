@@ -7,7 +7,7 @@
 omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientPairManager) {
     this->_clientPairManager = std::move(clientPairManager);
 
-    this->onPairClose = [this] (const PairPtr& pair){
+    this->pairCloseHandler = [this] (const PairPtr& pair){
         std::lock_guard<std::mutex> lockGuard(this->_locker);
 
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
@@ -27,14 +27,14 @@ size_t omg::ClientForwarder::onSend(const struct sockaddr* sourceAddress, const 
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     int errCode = 0;
-    size_t sockAddrHash = -1;
-    PairPtr pair = nullptr;
 
     // 计算源地址哈希
+    size_t sockAddrHash = -1;
     omg::utils::Socket::GenerateSockAddrHash(*reinterpret_cast<const sockaddr_u*>(sourceAddress), sockAddrHash);
 
     // 获取源地址对应的 Pair
     // 如果此来源地址没有对应的 Pair 则分配一个
+    PairPtr pair = nullptr;
     auto iterator = this->_sourceAddressMap.find(sockAddrHash);
     if(iterator == this->_sourceAddressMap.end()){
 
@@ -49,15 +49,26 @@ size_t omg::ClientForwarder::onSend(const struct sockaddr* sourceAddress, const 
         pair->onReceive = this->onReceive;
 
         // 注册关闭回调
-        pair->addOnCloseHandler(this->onPairClose);
+        pair->addOnCloseHandler(this->pairCloseHandler);
 
         LOGGER_INFO("Pair (id: {}) has created", pair->id());
     }else{
         pair = iterator->second;
     }
 
+    if(pair == nullptr){
+        LOGGER_WARN("Failed to get a pair, pair is null");
+        this->_sourceAddressMap.erase(sockAddrHash);
+        return -1;
+    }
+
     // 获取 Pair 上下文
     ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+    if(clientPairContext == nullptr){
+        LOGGER_WARN("Failed to get context from pair ( id: {})", pair->id());
+        pair->close();
+        return -1;
+    }
 
     // 如果是新添加的 Pair 则设置一些信息
     if(iterator == this->_sourceAddressMap.end()){

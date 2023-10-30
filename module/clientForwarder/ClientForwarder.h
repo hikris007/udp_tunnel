@@ -69,7 +69,7 @@ namespace omg {
         /*!
          * Pair 关闭的回调
          */
-        std::function<void(const PairPtr& pair)> onPairClose = nullptr;
+        std::function<void(const PairPtr& pair)> pairCloseHandler = nullptr;
 
 
         /*!

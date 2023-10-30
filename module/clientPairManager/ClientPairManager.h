@@ -45,6 +45,7 @@ namespace omg {
         // 获取所有隧道
         void foreachTunnels(const std::function<void(const TunnelPtr&)>& handler);
     protected:
+        int removeTunnel(TunnelID tunnelID);
 
     private:
         /*!
