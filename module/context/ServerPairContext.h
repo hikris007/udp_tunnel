@@ -26,6 +26,12 @@ namespace omg {
         std::shared_ptr<hv::UdpClient> _udpClient = nullptr;
         TunnelPtr _tunnel = nullptr;
 
+        /*!
+         * Server 需要用来定时清理
+         */
+        size_t _lastDataReceivedTime = 0; // 最后从服务端接收数据的时间戳（秒）
+        size_t _lastDataSentTime = 0; // 最后一次发送给服务端数据的时间戳（秒）
+
         Byte* _data = nullptr;
         std::mutex _dataMutex;
     };

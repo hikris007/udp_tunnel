@@ -72,7 +72,7 @@ void omg::Client::garbageCollection() {
     endTimestamp = utils::Time::GetCurrentTs();
 
     LOGGER_INFO(
-            "GC finished， spend {}ms, tunnel count: {}, success to clean {}/{} pairs",
+            "GC finished，spend {}ms, tunnel count: {}, success to clean {}/{} pairs",
             ( endTimestamp - beginTimestamp ),
             tunnelCount,
             pairCount,
@@ -139,7 +139,7 @@ int omg::Client::init() {
 
 int omg::Client::run() {
     if(this->isRunning)
-        return 0;
+        return -1;
 
     std::lock_guard<std::mutex> locker(this->_runMutex);
 
@@ -150,14 +150,17 @@ int omg::Client::run() {
         return -1;
     }
 
+    // 开始
+    this->_udpServer->start();
+
     // 垃圾回收
     this->gcTimerID = this->_eventLoop->setInterval(1000 * 10, [this](hv::TimerID timerID){
         this->garbageCollection();
     });
     LOGGER_WARN("GC is running, timer id: {}", this->gcTimerID);
 
-    // 开始
-    this->_udpServer->start();
+    if(this->_eventLoop->isStopped())
+        this->_eventLoop->run();
 
     this->isRunning = true;
     LOGGER_WARN("The client is running on {}.", this->_appContext->clientConfig->listenDescription);
@@ -167,9 +170,12 @@ int omg::Client::run() {
 
 int omg::Client::shutdown() {
     if(!this->isRunning)
-        return 0;
+        return -1;
 
     std::lock_guard<std::mutex> lockGuard(this->_shutdownMutex);
+
+    // 停止接收数据
+    this->_udpServer->stop();
 
     // 停止 GC 清理
     if(this->gcTimerID != INVALID_TIMER_ID){
@@ -179,8 +185,8 @@ int omg::Client::shutdown() {
         this->gcTimerID = INVALID_TIMER_ID;
     }
 
-    // 停止接收数据
-    this->_udpServer->stop();
+    if(this->_eventLoop->isRunning())
+        this->_eventLoop->stop();
 
     this->isRunning = false;
 

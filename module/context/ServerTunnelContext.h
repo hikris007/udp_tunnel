@@ -44,6 +44,18 @@ namespace omg {
 
             return std::move(pairPtr);
         }
+
+        void foreachPairs(const std::function<void(PairPtr &)>& handler) {
+            std::lock_guard<std::mutex> lockGuard(this->_locker);
+
+            for(auto & iterator : this->_pairs){
+                if(iterator.second.expired())
+                    return;
+
+                PairPtr pair = iterator.second.lock();
+                handler(pair);
+            }
+        }
     private:
         std::mutex _locker;
         std::unordered_map<PairID, std::weak_ptr<Pair>> _pairs; // 映射的集合

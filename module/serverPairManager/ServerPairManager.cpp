@@ -16,6 +16,8 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext, hv::EventLoopP
 
         // 获取上下文
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
+        if(serverPairContext == nullptr)return;
+
         std::lock_guard<std::mutex> lockGuard(serverPairContext->_dataMutex);
 
         memcpy(
@@ -24,17 +26,21 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext, hv::EventLoopP
                 length
         );
 
+        // 记录最后收到数据的时间戳(ms)
+        serverPairContext->_lastDataReceivedTime = utils::Time::GetCurrentTs();
+
         // 获取 Tunnel
-        TunnelPtr tunnel = serverPairContext->_tunnel;
+        const TunnelPtr& tunnel = serverPairContext->_tunnel;
         tunnel->send(serverPairContext->_data, sizeof(PairID)+length);
     };
 
-    this->pairSendHandler = [this](const PairPtr& pair,const Byte* payload, size_t len){
+    this->pairSendHandler = [this](const PairPtr& pair,const Byte* payload, size_t length){
         // 获取上下文
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
+        if(serverPairContext == nullptr)return -1;
 
         std::shared_ptr<hv::UdpClient> udpClient = serverPairContext->_udpClient;
-        return udpClient->sendto(payload, len);
+        return udpClient->sendto(payload, length);
     };
 
     this->pairCloseHandler = [this](const PairPtr& pair){
@@ -57,17 +63,26 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext, hv::EventLoopP
 }
 
 void omg::ServerPairManager::onTunnelOpen(TunnelPtr tunnel) {
-    // 上下文
+    // 设置上下文
     ServerTunnelContextPtr serverTunnelContext = std::make_shared<ServerTunnelContext>();
     tunnel->setContextPtr(serverTunnelContext);
 
     // 注册事件
-    tunnel->onReceive = [this](TunnelPtr tunnel, const Byte* payload, size_t len){
-        this->onSend(tunnel, payload, len);
+    tunnel->onReceive = [this](const TunnelPtr& tunnel, const Byte* payload, size_t length){
+        this->onSend(tunnel, payload, length);
     };
 
     // 隧道关闭时移除
     tunnel->addOnErrorHandler([this](const TunnelPtr& tunnel, void* data){
+        // 遍历关闭 Pair
+        ServerTunnelContextPtr _serverTunnelContext = tunnel->getContextPtr<ServerTunnelContext>();
+        if(_serverTunnelContext != nullptr){
+            _serverTunnelContext->foreachPairs([&tunnel](const PairPtr& pair){
+                LOGGER_INFO("Pair (id: {}) is ready to close, because owner tunnel (id: {}) is close", pair->id(), tunnel->id());
+                pair->close();
+            });
+        }
+
         std::lock_guard<std::mutex> lockGuard(this->_tunnelsMutex);
 
         auto iterator = this->_tunnels.find(tunnel->id());
@@ -78,6 +93,15 @@ void omg::ServerPairManager::onTunnelOpen(TunnelPtr tunnel) {
 
     // 隧道关闭时移除
     tunnel->addOnDestroyHandler([this](const TunnelPtr& tunnel){
+        // 遍历关闭 Pair
+        ServerTunnelContextPtr _serverTunnelContext = tunnel->getContextPtr<ServerTunnelContext>();
+        if(_serverTunnelContext != nullptr){
+            _serverTunnelContext->foreachPairs([&tunnel](const PairPtr& pair){
+                LOGGER_INFO("Pair (id: {}) is ready to close, because owner tunnel (id: {}) is close", pair->id(), tunnel->id());
+                pair->close();
+            });
+        }
+
         std::lock_guard<std::mutex> lockGuard(this->_tunnelsMutex);
 
         auto iterator = this->_tunnels.find(tunnel->id());
@@ -92,34 +116,63 @@ void omg::ServerPairManager::onTunnelOpen(TunnelPtr tunnel) {
     LOGGER_INFO("New tunnel:{}", tunnel->id());
 }
 
-size_t omg::ServerPairManager::onSend(TunnelPtr tunnel, const Byte *payload, size_t length) {
+size_t omg::ServerPairManager::onSend(const TunnelPtr& tunnel, const Byte *payload, size_t length) {
+    int errCode = 0;
+
     if(payload == nullptr || length < (sizeof(PairID) + 1))
         return 0;
 
-    // 获取 PairID && 根据 PairID 获取 Pair
+    // 解析 PairID
     PairID pairID = INVALID_PAIR_ID;
     memcpy(&pairID, payload, sizeof(PairID));
+    if(pairID == INVALID_PAIR_ID){
+        LOGGER_DEBUG("Failed to parse pair id from payload");
+        return -1;
+    }
 
+    // 尝试从上下文中获取 Pair
     omg::ServerTunnelContextPtr serverTunnelContext = tunnel->getContextPtr<omg::ServerTunnelContext>();
-    if(serverTunnelContext == nullptr)return -1;
+    if(serverTunnelContext == nullptr){
+        LOGGER_WARN("Failed to get context from tunnel (id: {}), context is null", tunnel->id());
+        return -1;
+    }
 
     PairPtr pair = serverTunnelContext->getPair(pairID);
-
+    bool isNewPair = false;
     // 如果没有就创建
     if(pair == nullptr){
-        this->createPair(tunnel, pairID, pair);
-        serverTunnelContext->addPair(pair);
+        errCode = this->createPair(tunnel, pairID, pair);
 
-        ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
-        if(serverPairContext == nullptr || serverPairContext->_udpClient == nullptr)return -1;
-        LOGGER_INFO("New pair:{} <----> {}", pair->id(), serverPairContext->_udpClient->channel->peeraddr());
+        if(errCode != 0){
+            pair->close();
+            return -1;
+        }
+
+        isNewPair = true;
+        LOGGER_INFO("Pair (tunnelID:{}, id: {}) has created", tunnel->id(), pair->id());
     }
+
+    ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
+
+    if(serverPairContext == nullptr){
+        return -1;
+    }
+
+    if(isNewPair){
+        LOGGER_INFO("Pair (tunnelID:{}, id: {}) map to {}",tunnel->id(), pair->id(), serverPairContext->_udpClient->channel->peeraddr());
+    }
+
+    // 记录最后发送的时间戳
+    serverPairContext->_lastDataSentTime = utils::Time::GetCurrentTs();
 
     return pair->send(payload + sizeof(PairID), length - sizeof(PairID));
 }
 
 int omg::ServerPairManager::createPair(TunnelPtr tunnel, PairID pairID, PairPtr& pairPtr) {
     int errCode = 0;
+
+    ServerTunnelContextPtr serverTunnelContext = tunnel->getContextPtr<ServerTunnelContext>();
+    if(serverTunnelContext == nullptr)return -1;
 
     PairPtr pair = std::make_shared<Pair>(pairID);
 
@@ -153,6 +206,16 @@ int omg::ServerPairManager::createPair(TunnelPtr tunnel, PairID pairID, PairPtr&
 
     udpClient->start();
 
+    serverTunnelContext->addPair(pair);
     pairPtr = pair;
+
     return 0;
+}
+
+void omg::ServerPairManager::foreachTunnels(const std::function<void(const TunnelPtr &)> &handler) {
+    std::lock_guard<std::mutex> lockGuard(this->_tunnelsMutex);
+
+    for(auto & _tunnel : this->_tunnels){
+        handler(_tunnel.second);
+    }
 }

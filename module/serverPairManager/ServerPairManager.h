@@ -14,15 +14,18 @@
 #include "../udpClient/UDPClientFactory.h"
 #include "../context/ServerPairContext.h"
 #include "../context/ServerTunnelContext.h"
+#include "../utils/time.hpp"
 
 namespace omg {
     class ServerPairManager {
     public:
         ServerPairManager(AppContext* appContext, hv::EventLoopPtr eventLoop);
 
-        void onTunnelOpen(TunnelPtr tunnelPtr);
-        size_t onSend(TunnelPtr tunnelPtr, const Byte* payload, size_t length);
+        void onTunnelOpen(TunnelPtr tunnel);
+        size_t onSend(const TunnelPtr& tunnel, const Byte* payload, size_t length);
 
+        // 获取所有隧道
+        void foreachTunnels(const std::function<void(const TunnelPtr&)>& handler);
     private:
         int createPair(TunnelPtr tunnel, PairID pairID, PairPtr& pairPtr);
 

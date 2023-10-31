@@ -96,7 +96,7 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
 
         // 遍历关闭 Pair
         clientTunnelContext->foreachPairs([&tunnel](const PairPtr& pair){
-            LOGGER_INFO("Pair (id :{}) is ready to close, because owner tunnel (id: {}) is close", pair->id(), tunnel->id());
+            LOGGER_INFO("Pair (id: {}) is ready to close, because owner tunnel (id: {}) is close", pair->id(), tunnel->id());
             pair->close();
         });
 
