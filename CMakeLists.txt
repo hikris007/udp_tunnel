@@ -28,6 +28,8 @@ add_executable(udp_tunnel
         module/serverPairManager/ServerPairManager.cpp
         module/tunnelIDPool/TunnelIDPool.cpp
         module/udpClient/UDPClientFactory.cpp
+        module/payload/PayloadWrapper.cpp
+        module/payload/Payload.cpp
         main.cpp
         )
 add_executable(
@@ -42,6 +44,8 @@ add_executable(
         module/tunnelIDPool/TunnelIDPool.cpp
         module/serverPairManager/ServerPairManager.cpp
         module/udpClient/UDPClientFactory.cpp
+        module/payload/PayloadWrapper.cpp
+        module/payload/Payload.cpp
 )
 
 

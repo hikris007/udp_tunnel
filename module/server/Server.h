@@ -5,6 +5,7 @@
 #ifndef UDP_TUNNEL_SERVER_H
 #define UDP_TUNNEL_SERVER_H
 
+#include <vector>
 #include "../../header/AppContext.h"
 #include "../serverPairManager/ServerPairManager.h"
 #include "../listener/Listener.h"

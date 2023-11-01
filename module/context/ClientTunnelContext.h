@@ -21,7 +21,7 @@ namespace omg {
          * @return 返回序号id，失败则返回 INVALID_PAIR_ID
          */
         PairID takeSeatNumber(){
-            std::lock_guard<std::mutex> locker(this->_locker);
+            std::lock_guard<std::mutex> lockGuard(this->_availablePairIDsLocker);
             if(this->_availablePairIDs.empty())
                 return INVALID_PAIR_ID;
 
@@ -37,13 +37,13 @@ namespace omg {
          * @param pairID
          */
         void putSeatNumber(PairID pairID){
-            std::lock_guard<std::mutex> locker(this->_locker);
+            std::lock_guard<std::mutex> lockGuard(this->_availablePairIDsLocker);
             this->_availablePairIDs.insert(pairID);
         }
 
 
         void addPair(PairPtr pair){
-            std::lock_guard<std::mutex> locker(this->_locker);
+            std::lock_guard<std::mutex> lockGuard(this->_pairsLocker);
             this->_pairs.insert({ pair->id(), std::move(pair) });
         }
 
@@ -55,8 +55,6 @@ namespace omg {
         void getPair(PairID pairID, PairPtr& pairPtr){
             if(pairID == INVALID_PAIR_ID)
                 return;
-
-            std::lock_guard<std::mutex> locker(this->_locker);
 
             auto iterator = this->_pairs.find(pairID);
             if(iterator == this->_pairs.end())
@@ -73,7 +71,7 @@ namespace omg {
          * @param pair
          */
         void removePair(const PairPtr& pair){
-            std::lock_guard<std::mutex> locker(this->_locker);
+            std::lock_guard<std::mutex> lockGuard(this->_pairsLocker);
             auto iterator = this->_pairs.find(pair->id());
             if(iterator == this->_pairs.end())
                 return;
@@ -82,7 +80,7 @@ namespace omg {
         }
 
         void foreachPairs(const std::function<void(PairPtr &)>& handler) {
-            std::lock_guard<std::mutex> lockGuard(this->_locker);
+            std::lock_guard<std::mutex> lockGuard(this->_pairsLocker);
 
             for(auto & iterator : this->_pairs){
                 if(iterator.second.expired())
@@ -105,7 +103,8 @@ namespace omg {
     private:
         std::unordered_map<PairID, std::weak_ptr<Pair>> _pairs; // 映射的集合
         std::unordered_set<PairID> _availablePairIDs; // 可用的映射 ID
-        std::mutex _locker;
+        std::mutex _availablePairIDsLocker;
+        std::mutex _pairsLocker;
     };
 
     typedef std::shared_ptr<ClientTunnelContext> ClientTunnelContextPtr;

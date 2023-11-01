@@ -18,20 +18,14 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext, hv::EventLoopP
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
         if(serverPairContext == nullptr)return;
 
-        std::lock_guard<std::mutex> lockGuard(serverPairContext->_dataMutex);
-
-        memcpy(
-                serverPairContext->_data + sizeof(PairID),
-                payload,
-                length
-        );
+        serverPairContext->payload.copyFrom(payload, sizeof(PairID), length);
 
         // 记录最后收到数据的时间戳(ms)
-        serverPairContext->_lastDataReceivedTime = utils::Time::GetCurrentTs();
+        serverPairContext->lastDataReceivedTime = utils::Time::GetCurrentTs();
 
         // 获取 Tunnel
         const TunnelPtr& tunnel = serverPairContext->_tunnel;
-        tunnel->send(serverPairContext->_data, sizeof(PairID)+length);
+        tunnel->send(serverPairContext->payload.data(), sizeof(PairID)+length);
     };
 
     this->pairSendHandler = [this](const PairPtr& pair,const Byte* payload, size_t length){
@@ -163,7 +157,7 @@ size_t omg::ServerPairManager::onSend(const TunnelPtr& tunnel, const Byte *paylo
     }
 
     // 记录最后发送的时间戳
-    serverPairContext->_lastDataSentTime = utils::Time::GetCurrentTs();
+    serverPairContext->lastDataSentTime = utils::Time::GetCurrentTs();
 
     return pair->send(payload + sizeof(PairID), length - sizeof(PairID));
 }
@@ -200,7 +194,7 @@ int omg::ServerPairManager::createPair(TunnelPtr tunnel, PairID pairID, PairPtr&
 
     serverPairContext->_udpClient = udpClient;
     serverPairContext->_tunnel = std::move(tunnel);
-    memcpy(serverPairContext->_data, &pairID, sizeof(PairID));
+    serverPairContext->payload.copyFrom(&pairID, 0, sizeof(PairID));
 
     pair->setContextPtr(serverPairContext);
 

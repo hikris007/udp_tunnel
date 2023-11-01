@@ -6,6 +6,7 @@
 #define UDP_TUNNEL_CLIENT_H
 
 #include <chrono>
+#include <vector>
 #include "hv/EventLoop.h"
 #include "hv/UdpServer.h"
 #include "hv/hloop.h"

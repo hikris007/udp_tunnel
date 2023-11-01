@@ -13,7 +13,7 @@ omg::ClientForwarder::ClientForwarder(std::shared_ptr<ClientPairManager> clientP
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
 
         size_t sockAddrHash = -1;
-        omg::utils::Socket::GenerateSockAddrHash(clientPairContext->_sourceAddressSockAddr, sockAddrHash);
+        omg::utils::Socket::GenerateSockAddrHash(clientPairContext->sourceAddressSockAddr, sockAddrHash);
 
         auto iterator = this->_sourceAddressMap.find(sockAddrHash);
         if(iterator == this->_sourceAddressMap.end())
@@ -78,16 +78,16 @@ size_t omg::ClientForwarder::onSend(const struct sockaddr* sourceAddress, const 
         std::string source = SOCKADDR_STR(sourceAddress, buf);
 
         // 设置源地址信息
-        memcpy(&clientPairContext->_sourceAddressSockAddr, sourceAddress, sizeof(sockaddr_u));
-        clientPairContext->_sourceAddress = source;
+        memcpy(&clientPairContext->sourceAddressSockAddr, sourceAddress, sizeof(sockaddr_u));
+        clientPairContext->sourceAddress = source;
 
         // 把源地址和 Pair 关联
         this->_sourceAddressMap.insert({ sockAddrHash, pair });
-        LOGGER_INFO("Pair (id: {}) map to {}", pair->id(), clientPairContext->_sourceAddress);
+        LOGGER_INFO("Pair (id: {}) map to {}", pair->id(), clientPairContext->sourceAddress);
     }
 
     // 记录最后发送时间
-    clientPairContext->_lastDataSentTime = utils::Time::GetCurrentTs();
+    clientPairContext->lastDataSentTime = utils::Time::GetCurrentTs();
 
     // 写入数据
     return pair->send(payload, length);

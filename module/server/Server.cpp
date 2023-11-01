@@ -76,9 +76,10 @@ void omg::Server::garbageCollection() {
     size_t endTimestamp = 0;
     int tunnelCount = 0;
     int pairCount = 0;
-    int cleanPairCount = 0;
 
-    auto pairHandler = [this, &pairCount, &cleanPairCount](PairPtr& pair){
+    std::vector<PairPtr> pendingToDelete;
+
+    auto pairHandler = [this, &pairCount, &pendingToDelete](PairPtr& pair){
         pairCount++;
 
         // 获取 Pair 上下文
@@ -92,16 +93,15 @@ void omg::Server::garbageCollection() {
         size_t cts = omg::utils::Time::GetCurrentTs();
 
         // 差
-        size_t sinceLastWrite = cts - serverPairContext->_lastDataSentTime;
-        size_t sinceLastReceived = cts - serverPairContext->_lastDataReceivedTime;
+        size_t sinceLastWrite = cts - serverPairContext->lastDataSentTime;
+        size_t sinceLastReceived = cts - serverPairContext->lastDataReceivedTime;
         LOGGER_DEBUG("Pair last activity time, sinceLastWrite: {}, sinceLastReceived:{}, pair id: {}", sinceLastWrite, sinceLastReceived, pair->id());
 
         // 超时就关闭
         if(sinceLastWrite > this->_appContext->writeTimeout || sinceLastReceived > this->_appContext->receiveTimeout){
             LOGGER_DEBUG("Clean pair, id: {}",  pair->id());
 
-            pair->close();
-            cleanPairCount++;
+            pendingToDelete.push_back(pair);
         }
     };
 
@@ -120,7 +120,13 @@ void omg::Server::garbageCollection() {
         serverTunnelContext->foreachPairs(pairHandler);
     };
 
+    int cleanPairCount = 0;
     this->_serverPairManager->foreachTunnels(handler);
+    for(const auto &pair : pendingToDelete){
+        pair->close();
+        cleanPairCount++;
+    }
+
     endTimestamp = utils::Time::GetCurrentTs();
 
     LOGGER_INFO(

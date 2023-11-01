@@ -22,11 +22,13 @@ void omg::Client::garbageCollection() {
 
     size_t beginTimestamp = utils::Time::GetCurrentTs();
     size_t endTimestamp = 0;
+
     int tunnelCount = 0;
     int pairCount = 0;
-    int cleanPairCount = 0;
 
-    auto pairHandler = [this, &pairCount, &cleanPairCount](PairPtr& pair){
+    std::vector<PairPtr> pendingToDelete;
+
+    auto pairHandler = [this, &pairCount, &pendingToDelete](PairPtr& pair){
         pairCount++;
 
         // 获取 Pair 上下文
@@ -40,16 +42,15 @@ void omg::Client::garbageCollection() {
         size_t cts = omg::utils::Time::GetCurrentTs();
 
         // 差
-        size_t sinceLastWrite = cts - clientPairContext->_lastDataSentTime;
-        size_t sinceLastReceived = cts - clientPairContext->_lastDataReceivedTime;
+        size_t sinceLastWrite = cts - clientPairContext->lastDataSentTime;
+        size_t sinceLastReceived = cts - clientPairContext->lastDataReceivedTime;
         LOGGER_DEBUG("Pair last activity time, sinceLastWrite: {}, sinceLastReceived:{}, pair id: {}", sinceLastWrite, sinceLastReceived, pair->id());
 
         // 超时就关闭
         if(sinceLastWrite > this->_appContext->writeTimeout || sinceLastReceived > this->_appContext->receiveTimeout){
             LOGGER_DEBUG("Clean pair, id: {}",  pair->id());
 
-            pair->close();
-            cleanPairCount++;
+            pendingToDelete.push_back(pair);
         }
     };
 
@@ -68,7 +69,13 @@ void omg::Client::garbageCollection() {
         clientTunnelContext->foreachPairs(pairHandler);
     };
 
+    int cleanPairCount = 0;
     this->_clientPairManager->foreachTunnels(handler);
+    for(const auto &pair : pendingToDelete){
+        pair->close();
+        cleanPairCount++;
+    }
+
     endTimestamp = utils::Time::GetCurrentTs();
 
     LOGGER_INFO(
@@ -121,10 +128,10 @@ int omg::Client::init() {
         ClientPairContextPtr clientPairContext = pairPtr->getContextPtr<ClientPairContext>();
 
         // 从上下文中获取源地址
-        sockaddr_u* sourceAddress = &clientPairContext->_sourceAddressSockAddr;
+        sockaddr_u* sourceAddress = &clientPairContext->sourceAddressSockAddr;
 
         // 记录最后收到数据的时间
-        clientPairContext->_lastDataReceivedTime = utils::Time::GetCurrentTs();
+        clientPairContext->lastDataReceivedTime = utils::Time::GetCurrentTs();
 
         // 写回去
         return this->_udpServer->sendto(
