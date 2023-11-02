@@ -24,9 +24,9 @@ namespace omg {
     };
 
     struct AppContext {
-        omg::uint64 writeTimeout = 1000*60;
-        omg::uint64 receiveTimeout = 1000*60;
-        TransportProtocol transportProtocol = TransportProtocol ::Websocket;
+        omg::uint64 writeTimeout = 1000*60*3;
+        omg::uint64 receiveTimeout = 1000*60*3;
+        TransportProtocol transportProtocol = TransportProtocol::Websocket;
         RunMode runMode = RunMode::CLIENT;
         ServerConfig* serverConfig = nullptr;
         ClientConfig* clientConfig = nullptr;

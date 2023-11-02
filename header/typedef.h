@@ -31,6 +31,13 @@ namespace omg {
     } TransportProtocol;
 
     typedef enum {
+        DEBUG,
+        INFO,
+        WARN,
+        ERROR
+    } LoggerLevel;
+
+    typedef enum {
         SERVER,
         CLIENT
     } RunMode;

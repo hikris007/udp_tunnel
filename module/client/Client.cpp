@@ -82,8 +82,8 @@ void omg::Client::garbageCollection() {
             "GC finished，spend {}ms, tunnel count: {}, success to clean {}/{} pairs",
             ( endTimestamp - beginTimestamp ),
             tunnelCount,
-            pairCount,
-            cleanPairCount
+            cleanPairCount,
+            pairCount
     );
 }
 
@@ -126,6 +126,8 @@ int omg::Client::init() {
     this->_clientForwarder->onReceive = [this](const PairPtr& pairPtr, const Byte* payload, size_t length){
         // 获取 Pair 上下文
         ClientPairContextPtr clientPairContext = pairPtr->getContextPtr<ClientPairContext>();
+
+        if(clientPairContext == nullptr)return -1;
 
         // 从上下文中获取源地址
         sockaddr_u* sourceAddress = &clientPairContext->sourceAddressSockAddr;

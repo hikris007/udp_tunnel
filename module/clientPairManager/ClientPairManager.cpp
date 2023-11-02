@@ -45,6 +45,9 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
         if(clientPairContext == nullptr) return -1;
 
+        // 记录最后发送时间
+        clientPairContext->lastDataSentTime = utils::Time::GetCurrentTs();
+
         // 从上下文中获取所属的隧道
         // 如果没成功就返回 放弃写入
         TunnelPtr tunnel = clientPairContext->tunnel;
@@ -80,7 +83,7 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         // 解除关联 & 释放 PairID
         clientTunnelContext->putSeatNumber(pair->id());
         clientTunnelContext->removePair(pair);
-        LOGGER_INFO("Pair (id: {}) is release seat number: {}, owner tunnel id: {}", pair->id(), pair->id(), tunnel->id());
+        LOGGER_INFO("Pair (id: {}) is release seat number: {}, owner tunnel (id: {})", pair->id(), pair->id(), tunnel->id());
     };
 
     /*!
@@ -95,10 +98,16 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         }
 
         // 遍历关闭 Pair
-        clientTunnelContext->foreachPairs([&tunnel](const PairPtr& pair){
+        std::vector<PairPtr> pendingToDelete;
+
+        clientTunnelContext->foreachPairs([&pendingToDelete](const PairPtr& pair){
+            pendingToDelete.push_back(pair);
+        });
+
+        for(const auto &pair : pendingToDelete){
             LOGGER_INFO("Pair (id: {}) is ready to close, because owner tunnel (id: {}) is close", pair->id(), tunnel->id());
             pair->close();
-        });
+        }
 
         // 从本地 Tunnels 移除
         this->removeTunnel(tunnel->id());
@@ -113,10 +122,16 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
         }
 
         // 遍历关闭 Pair
-        clientTunnelContext->foreachPairs([&tunnel](const PairPtr& pair){
+        std::vector<PairPtr> pendingToDelete;
+
+        clientTunnelContext->foreachPairs([&pendingToDelete](const PairPtr& pair){
+            pendingToDelete.push_back(pair);
+        });
+
+        for(const auto &pair : pendingToDelete){
             LOGGER_INFO("Pair (id :{}) is ready to close, because owner tunnel (id: {}) an error occurred", pair->id(), tunnel->id());
             pair->close();
-        });
+        }
 
         // 从本地 Tunnels 移除
         this->removeTunnel(tunnel->id());

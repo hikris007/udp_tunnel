@@ -133,7 +133,7 @@ void omg::Server::garbageCollection() {
             "GC finished，spend {}ms, tunnel count: {}, success to clean {}/{} pairs",
             ( endTimestamp - beginTimestamp ),
             tunnelCount,
-            pairCount,
-            cleanPairCount
+            cleanPairCount,
+            pairCount
     );
 }

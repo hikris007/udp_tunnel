@@ -33,6 +33,9 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext, hv::EventLoopP
         ServerPairContextPtr serverPairContext = pair->getContextPtr<ServerPairContext>();
         if(serverPairContext == nullptr)return -1;
 
+        // 记录最后发送的时间戳
+        serverPairContext->lastDataSentTime = utils::Time::GetCurrentTs();
+
         std::shared_ptr<hv::UdpClient> udpClient = serverPairContext->_udpClient;
         return udpClient->sendto(payload, length);
     };
@@ -71,10 +74,17 @@ void omg::ServerPairManager::onTunnelOpen(TunnelPtr tunnel) {
         // 遍历关闭 Pair
         ServerTunnelContextPtr _serverTunnelContext = tunnel->getContextPtr<ServerTunnelContext>();
         if(_serverTunnelContext != nullptr){
-            _serverTunnelContext->foreachPairs([&tunnel](const PairPtr& pair){
+
+            std::vector<PairPtr> pendingToDelete;
+
+            _serverTunnelContext->foreachPairs([&pendingToDelete](const PairPtr& pair){
+                pendingToDelete.push_back(pair);
+            });
+
+            for(const auto &pair : pendingToDelete){
                 LOGGER_INFO("Pair (id: {}) is ready to close, because owner tunnel (id: {}) is close", pair->id(), tunnel->id());
                 pair->close();
-            });
+            }
         }
 
         std::lock_guard<std::mutex> lockGuard(this->_tunnelsMutex);
@@ -90,10 +100,17 @@ void omg::ServerPairManager::onTunnelOpen(TunnelPtr tunnel) {
         // 遍历关闭 Pair
         ServerTunnelContextPtr _serverTunnelContext = tunnel->getContextPtr<ServerTunnelContext>();
         if(_serverTunnelContext != nullptr){
-            _serverTunnelContext->foreachPairs([&tunnel](const PairPtr& pair){
+
+            std::vector<PairPtr> pendingToDelete;
+
+            _serverTunnelContext->foreachPairs([&pendingToDelete](const PairPtr& pair){
+                pendingToDelete.push_back(pair);
+            });
+
+            for(const auto &pair : pendingToDelete){
                 LOGGER_INFO("Pair (id: {}) is ready to close, because owner tunnel (id: {}) is close", pair->id(), tunnel->id());
                 pair->close();
-            });
+            }
         }
 
         std::lock_guard<std::mutex> lockGuard(this->_tunnelsMutex);
@@ -155,9 +172,6 @@ size_t omg::ServerPairManager::onSend(const TunnelPtr& tunnel, const Byte *paylo
     if(isNewPair){
         LOGGER_INFO("Pair (tunnelID:{}, id: {}) map to {}",tunnel->id(), pair->id(), serverPairContext->_udpClient->channel->peeraddr());
     }
-
-    // 记录最后发送的时间戳
-    serverPairContext->lastDataSentTime = utils::Time::GetCurrentTs();
 
     return pair->send(payload + sizeof(PairID), length - sizeof(PairID));
 }

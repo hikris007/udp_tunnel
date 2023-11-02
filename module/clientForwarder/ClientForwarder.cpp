@@ -86,9 +86,6 @@ size_t omg::ClientForwarder::onSend(const struct sockaddr* sourceAddress, const 
         LOGGER_INFO("Pair (id: {}) map to {}", pair->id(), clientPairContext->sourceAddress);
     }
 
-    // 记录最后发送时间
-    clientPairContext->lastDataSentTime = utils::Time::GetCurrentTs();
-
     // 写入数据
     return pair->send(payload, length);
 }

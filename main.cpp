@@ -51,12 +51,25 @@ int main(int argc, char** argv) {
     std::string listenDescription;
     app.add_option("--ld, --listen-description", listenDescription, "监听描述")->required();
 
+    std::string loggerLevelStr = "info";
+    app.add_option("--ll, --logger-level", loggerLevelStr, "日志等级")
+        ->check(CLI::IsMember({"debug", "info", "warn", "error"}));
+
     CLI11_PARSE(app, argc, argv);
 
+    // 协议
     std::unordered_map<std::string, omg::TransportProtocol> transportProtocolMap;
     transportProtocolMap.insert({ "websocket", omg::TransportProtocol ::Websocket});
-
     omg::TransportProtocol transportProtocol = transportProtocolMap[transportProtocolStr];
+
+    // 日志等级
+    std::unordered_map<std::string, spdlog::level::level_enum> loggerLevelMap;
+    loggerLevelMap.insert({ "debug", spdlog::level::debug });
+    loggerLevelMap.insert({ "info", spdlog::level::info });
+    loggerLevelMap.insert({ "warn", spdlog::level::warn });
+    loggerLevelMap.insert({ "error", spdlog::level::err });
+    spdlog::level::level_enum loggerLevel = loggerLevelMap[loggerLevelStr];
+    Logger::getInstance().getLogger()->set_level(loggerLevel);
 
     if(serverMode){
         appContext.runMode = omg::RunMode::SERVER;
