@@ -9,6 +9,8 @@ omg::Server::Server(AppContext* appContext)
       _eventLoop(std::make_shared<hv::EventLoop>()),
       _serverPairManager(std::make_shared<ServerPairManager>(this->_appContext, this->_eventLoop))
 {
+    omg::ListenerFactory::getInstance().setEventLoopPtr(this->_eventLoop);
+
     omg::ListenerFactory::getInstance().createListener(
             this->_appContext->transportProtocol,
             this->_appContext->serverConfig->listenDescription,
@@ -56,13 +58,13 @@ int omg::Server::run() {
         this->garbageCollection();
     });
 
-//    if(this->_eventLoop->isStopped())
-//        this->_eventLoop->run();
-
     LOGGER_WARN("GC is running, timer id: {}", this->gcTimerID);
 
     this->_isRunning = true;
     LOGGER_WARN("The server is running on {}", this->_appContext->serverConfig->listenDescription);
+
+    if(this->_eventLoop->isStopped())
+        this->_eventLoop->run();
 
     return 0;
 }

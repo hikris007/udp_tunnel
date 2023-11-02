@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         clientPtr->run();
     }
 
-    getchar();
+//    getchar();
 
     return 0;
 }
