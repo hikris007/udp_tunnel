@@ -9,7 +9,7 @@ omg::Client::Client(AppContext *config) {
     this->_eventLoop = std::make_shared<hv::EventLoop>();
     this->_clientPairManager = std::make_shared<ClientPairManager>(this->_appContext->clientConfig);
     this->_clientForwarder = std::unique_ptr<ClientForwarder>(new ClientForwarder(this->_clientPairManager));
-    this->_udpServer = std::unique_ptr<hv::UdpServer>(new hv::UdpServer(this->_eventLoop));
+    this->_udpServer = std::make_shared<hv::UdpServer>(this->_eventLoop);
 
     // 初始化全局的隧道构造器的 EventLoop
     TunnelFactory::getInstance().setEventLoopPtr(this->_eventLoop);
@@ -160,7 +160,7 @@ int omg::Client::run() {
     }
 
     // 开始
-    this->_udpServer->start();
+    this->_eventLoop->runInLoop(std::bind(&hv::UdpServer::startRecv, this->_udpServer));
 
     // 垃圾回收
     this->gcTimerID = this->_eventLoop->setInterval(1000 * 10, [this](hv::TimerID timerID){
@@ -168,11 +168,10 @@ int omg::Client::run() {
     });
     LOGGER_WARN("GC is running, timer id: {}", this->gcTimerID);
 
-    if(this->_eventLoop->isStopped())
-        this->_eventLoop->run();
-
     this->isRunning = true;
     LOGGER_WARN("The client is running on {}.", this->_appContext->clientConfig->listenDescription);
+
+    this->_eventLoop->run();
 
     return 0;
 }
@@ -183,9 +182,6 @@ int omg::Client::shutdown() {
 
     std::lock_guard<std::mutex> lockGuard(this->_shutdownMutex);
 
-    // 停止接收数据
-    this->_udpServer->stop();
-
     // 停止 GC 清理
     if(this->gcTimerID != INVALID_TIMER_ID){
         this->_eventLoop->killTimer(this->gcTimerID);
@@ -194,8 +190,8 @@ int omg::Client::shutdown() {
         this->gcTimerID = INVALID_TIMER_ID;
     }
 
-    if(this->_eventLoop->isRunning())
-        this->_eventLoop->stop();
+    // 停止接收数据
+    this->_eventLoop->stop();
 
     this->isRunning = false;
 

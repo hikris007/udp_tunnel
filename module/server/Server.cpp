@@ -33,8 +33,7 @@ int omg::Server::shutdown() {
         this->gcTimerID = INVALID_TIMER_ID;
     }
 
-//    if(this->_eventLoop->isRunning())
-//        this->_eventLoop->stop();
+    this->_eventLoop->stop();
 
     this->_isRunning = false;
 
@@ -63,8 +62,7 @@ int omg::Server::run() {
     this->_isRunning = true;
     LOGGER_WARN("The server is running on {}", this->_appContext->serverConfig->listenDescription);
 
-    if(this->_eventLoop->isStopped())
-        this->_eventLoop->run();
+    this->_eventLoop->run();
 
     return 0;
 }

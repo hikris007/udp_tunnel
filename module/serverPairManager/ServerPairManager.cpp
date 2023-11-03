@@ -211,8 +211,7 @@ int omg::ServerPairManager::createPair(TunnelPtr tunnel, PairID pairID, PairPtr&
     serverPairContext->payload.copyFrom(&pairID, 0, sizeof(PairID));
 
     pair->setContextPtr(serverPairContext);
-
-    udpClient->start();
+    this->_eventLoop->runInLoop(std::bind(&hv::UdpClient::startRecv, udpClient));
 
     serverTunnelContext->addPair(pair);
     pairPtr = pair;

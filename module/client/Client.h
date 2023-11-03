@@ -66,7 +66,7 @@ namespace omg {
         std::unique_ptr<ClientForwarder> _clientForwarder = nullptr;
         std::shared_ptr<ClientPairManager> _clientPairManager = nullptr;
 
-        std::unique_ptr<hv::UdpServer> _udpServer = nullptr;
+        std::shared_ptr<hv::UdpServer> _udpServer = nullptr;
     };
 }
 #endif //UDP_TUNNEL_CLIENT_H
