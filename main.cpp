@@ -41,6 +41,9 @@ int main(int argc, char** argv) {
     omg::uint16 carryingCapacity = 4;
     app.add_option("--cc, --carrying-capacity", carryingCapacity, "多路复用数量");
 
+    omg::size_t maxTunnelCount = 100*100;
+    app.add_option("--mt, --max-tunnel", maxTunnelCount, "隧道数量上线");
+
     std::string transportProtocolStr = "websocket";
     app.add_option("--tp, --transport-protocol", transportProtocolStr, "协议")
         ->check(CLI::IsMember({"websocket"}));
@@ -90,6 +93,7 @@ int main(int argc, char** argv) {
 
         appContext.clientConfig->transportProtocol = transportProtocol;
         appContext.clientConfig->carryingCapacity = carryingCapacity;
+        appContext.clientConfig->maxTunnelCount = maxTunnelCount;
         appContext.clientConfig->listenDescription = listenDescription;
         appContext.clientConfig->endpoint = endpoint;
 

@@ -159,6 +159,8 @@ int omg::Client::run() {
         return -1;
     }
 
+    this->_eventLoop->runInLoop(std::bind(&ClientPairManager::adjustTunnelPool, this->_clientPairManager));
+
     // 开始
     this->_eventLoop->runInLoop(std::bind(&hv::UdpServer::startRecv, this->_udpServer));
 
@@ -181,6 +183,8 @@ int omg::Client::shutdown() {
         return -1;
 
     std::lock_guard<std::mutex> lockGuard(this->_shutdownMutex);
+
+    this->_udpServer->stop();
 
     // 停止 GC 清理
     if(this->gcTimerID != INVALID_TIMER_ID){

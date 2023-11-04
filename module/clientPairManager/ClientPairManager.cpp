@@ -138,6 +138,18 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     };
 }
 
+void omg::ClientPairManager::adjustTunnelPool() {
+    size_t minSeatCount = 1;
+    size_t seatCount = 0;
+
+    this->foreachTunnels([&seatCount](const TunnelPtr& tunnel){
+        ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
+        if(clientTunnelContext == nullptr)return;
+
+        seatCount += clientTunnelContext->vacancy();
+    });
+}
+
 int omg::ClientPairManager::createTunnel() {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 

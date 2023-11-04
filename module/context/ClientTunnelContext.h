@@ -12,8 +12,18 @@ namespace omg {
 
     public:
         ClientTunnelContext(size_t carryingCapacity){
+            this->_carryingCapacity = carryingCapacity;
+
             // 初始化 PairID 池
-            this->initAvailablePairIDs(carryingCapacity);
+            this->initAvailablePairIDs();
+        }
+
+        size_t vacancy() const {
+            return this->_availablePairIDs.size();
+        }
+
+        size_t capacity() const {
+            return this->_carryingCapacity;
         }
 
         /*!
@@ -92,10 +102,10 @@ namespace omg {
         }
 
     private:
-        void initAvailablePairIDs(size_t carryingCapacity){
+        void initAvailablePairIDs(){
             size_t begin = INVALID_PAIR_ID+1;
 
-            for(size_t i = begin; this->_availablePairIDs.size() < carryingCapacity; i++){
+            for(size_t i = begin; this->_availablePairIDs.size() < this->_carryingCapacity; i++){
                 this->putSeatNumber(i);
             }
         }
@@ -105,6 +115,7 @@ namespace omg {
         std::unordered_set<PairID> _availablePairIDs; // 可用的映射 ID
         std::mutex _availablePairIDsLocker;
         std::mutex _pairsLocker;
+        size_t _carryingCapacity;
     };
 
     typedef std::shared_ptr<ClientTunnelContext> ClientTunnelContextPtr;

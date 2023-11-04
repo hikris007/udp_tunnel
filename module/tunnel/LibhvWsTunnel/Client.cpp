@@ -3,11 +3,8 @@
 //
 
 #include "Client.h"
-#include <utility>
 
 namespace omg {
-    using WsClient = hv::WebSocketClient;
-    using WsClientUniquePtr = std::unique_ptr<WsClient>;
 
     LibhvWsClientTunnel::LibhvWsClientTunnel(hv::EventLoopPtr eventLoop, std::string url, omg::TunnelID tunnelID)
         : _state({INITIAL, INITIAL}),
@@ -62,7 +59,7 @@ namespace omg {
         this->_webSocketClient->setReconnect(&this->_reconnSetting);
 
         // 发起连接
-        this->_webSocketClient->open(this->_url.c_str());
+        this->_webSocketClient->open(this->_url);
 
         // 连接中状态
         this->changeState(CONNECTING);

@@ -28,6 +28,14 @@ namespace omg {
         explicit ClientPairManager(ClientConfig* clientConfig);
 
         /*!
+         * 调整隧道
+         * 不能超过隧道最大数量
+         * 保证一直有隧道可用
+         * 清理空闲隧道
+         */
+        void adjustTunnelPool();
+
+        /*!
          * 创建一个隧道
          * @return 错误码
          * 0 成功

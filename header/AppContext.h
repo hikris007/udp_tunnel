@@ -14,6 +14,7 @@ namespace omg {
         std::string listenDescription;
         std::string endpoint;
         omg::uint16 carryingCapacity;
+        omg::size_t maxTunnelCount;
     };
 
     // 配置项

@@ -6,9 +6,12 @@
 #define UDP_TUNNEL_LIBHV_WS_CLIENT_H
 
 #include "../Tunnel.h"
-#include "hv/WebSocketClient.h"
+#include "WebSocketClient.h"
 
 namespace omg {
+    using WsClient = WebSocketClient;
+    using WsClientUniquePtr = std::unique_ptr<WsClient>;
+
     class LibhvWsClientTunnel : public Tunnel, public std::enable_shared_from_this<LibhvWsClientTunnel>{
     public:
         LibhvWsClientTunnel(hv::EventLoopPtr eventLoop, std::string  url, TunnelID tunnelID);
@@ -36,7 +39,7 @@ namespace omg {
         TunnelID _tunnelID;
         std::string _url;
 
-        std::unique_ptr<hv::WebSocketClient> _webSocketClient = nullptr;
+        WsClientUniquePtr _webSocketClient = nullptr;
         reconn_setting_t _reconnSetting;
 
         CallBackManager<const TunnelPtr&> _onReadyCallbacks;

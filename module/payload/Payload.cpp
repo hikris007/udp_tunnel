@@ -4,8 +4,6 @@
 
 #include "Payload.h"
 
-#include <memory>
-
 omg::Payload::~Payload(){
     if(this->_data == nullptr)
         return;

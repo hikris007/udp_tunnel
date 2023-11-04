@@ -6,12 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 find_package(libhv CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
-find_package(Boost CONFIG COMPONENTS statechart)
 find_package(cityhash CONFIG REQUIRED)
-
-
-include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
 
 add_executable(udp_tunnel
         module/client/Client.cpp
@@ -25,6 +20,7 @@ add_executable(udp_tunnel
         module/pair/Pair.cpp
         module/tunnel/TunnelFactory.cpp
         module/tunnel/LibhvWsTunnel/Client.cpp
+        module/tunnel/LibhvWsTunnel/WebSocketClient.cpp
         module/serverPairManager/ServerPairManager.cpp
         module/tunnelIDPool/TunnelIDPool.cpp
         module/udpClient/UDPClientFactory.cpp
@@ -39,6 +35,7 @@ add_executable(
         module/logger/Logger.cpp
         module/tunnel/TunnelFactory.cpp
         module/tunnel/LibhvWsTunnel/Client.cpp
+        module/tunnel/LibhvWsTunnel/WebSocketClient.cpp
         module/tunnel/LibhvWsTunnel/Server.cpp
         module/listener/libhvWsListener/LibhvWsListener.cpp
         module/tunnelIDPool/TunnelIDPool.cpp
@@ -52,13 +49,11 @@ add_executable(
 target_link_libraries(udp_tunnel PRIVATE hv_static)
 target_link_libraries(udp_tunnel PRIVATE spdlog::spdlog)
 target_link_libraries(udp_tunnel PRIVATE CLI11::CLI11)
-target_link_libraries(udp_tunnel ${Boost_LIBRARIES})
 target_link_libraries(udp_tunnel PRIVATE cityhash)
 
 
 target_link_libraries(test PRIVATE hv_static)
 target_link_libraries(test PRIVATE spdlog::spdlog)
 target_link_libraries(test PRIVATE CLI11::CLI11)
-target_link_libraries(test ${Boost_LIBRARIES})
 target_link_libraries(test PRIVATE cityhash)
 

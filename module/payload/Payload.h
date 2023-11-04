@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <mutex>
+#include <cstring>
 #include "../../header/typedef.h"
 #include "PayloadWrapper.h"
 

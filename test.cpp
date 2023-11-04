@@ -190,20 +190,32 @@
 //    return 0;
 //}
 
+//int main(){
+//    hv::EventLoopPtr eventloop = std::make_shared<hv::EventLoop>();
+//    eventloop->runInLoop(nullptr);
+//    std::cout << "HEHE" << std::endl;
+//    std::shared_ptr<hv::UdpClient> udpclient;
+//    omg::UDPClientFactory::createLibhvUDPClient(eventloop, "10.0.0.1:10000", udpclient);
+//    udpclient->onMessage = [](const hv::SocketChannelPtr& channel, hv::Buffer* data){
+//        std::cout << "DATA:" << data->size() << std::endl;
+//    };
+//    udpclient->start();
+//
+//    std::string d = "Hey Kris";
+//    while(getchar() != 'c'){
+//        udpclient->sendto(d);
+//    }
+//    return 0;
+//}
+
 int main(){
     hv::EventLoopPtr eventloop = std::make_shared<hv::EventLoop>();
-    eventloop->runInLoop(nullptr);
-    std::cout << "HEHE" << std::endl;
-    std::shared_ptr<hv::UdpClient> udpclient;
-    omg::UDPClientFactory::createLibhvUDPClient(eventloop, "10.0.0.1:10000", udpclient);
-    udpclient->onMessage = [](const hv::SocketChannelPtr& channel, hv::Buffer* data){
-        std::cout << "DATA:" << data->size() << std::endl;
-    };
-    udpclient->start();
 
-    std::string d = "Hey Kris";
-    while(getchar() != 'c'){
-        udpclient->sendto(d);
-    }
+    eventloop->runInLoop([](){
+        std::cout << "RNM" << std::endl;
+    });
+
+    eventloop->run();
+
     return 0;
 }
