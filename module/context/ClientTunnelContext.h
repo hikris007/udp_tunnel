@@ -11,9 +11,10 @@ namespace omg {
     class ClientTunnelContext {
 
     public:
-        ClientTunnelContext(size_t carryingCapacity){
-            this->_carryingCapacity = carryingCapacity;
-
+        ClientTunnelContext(const TunnelPtr& tunnel, size_t carryingCapacity)
+            : _carryingCapacity( carryingCapacity),
+              _tunnel(tunnel)
+        {
             // 初始化 PairID 池
             this->initAvailablePairIDs();
         }
@@ -51,10 +52,30 @@ namespace omg {
             this->_availablePairIDs.insert(pairID);
         }
 
+        int createPair(PairPtr& pair){
+            PairID pairID = this->takeSeatNumber();
+            if(pairID == INVALID_PAIR_ID) return -1;
 
-        void addPair(PairPtr pair){
-            std::lock_guard<std::mutex> lockGuard(this->_pairsLocker);
-            this->_pairs.insert({ pair->id(), std::move(pair) });
+            pair = std::make_shared<Pair>(pairID);
+
+            // 关联隧道
+            this->addPair(pair);
+
+            pair->addOnCloseHandler([this](const PairPtr& pair){
+
+                // 解除关联 & 释放 PairID
+                this->removePair(pair);
+                this->putSeatNumber(pair->id());
+
+                if(_tunnel.expired()){
+                    LOGGER_INFO("Pair (id: {}) is release seat number: {}, owner tunnel wake pointer is expired", pair->id(), pair->id());
+                    return;
+                }
+
+                TunnelPtr tunnel = this->_tunnel.lock();
+                LOGGER_INFO("Pair (id: {}) is release seat number: {}, owner tunnel (id: {})", pair->id(), pair->id(), tunnel->id());
+            });
+            return 0;
         }
 
         /*!
@@ -76,18 +97,7 @@ namespace omg {
             pairPtr = iterator->second.lock();
         }
 
-        /*!
-         * 删除Pair和隧道的关联
-         * @param pair
-         */
-        void removePair(const PairPtr& pair){
-            std::lock_guard<std::mutex> lockGuard(this->_pairsLocker);
-            auto iterator = this->_pairs.find(pair->id());
-            if(iterator == this->_pairs.end())
-                return;
 
-            this->_pairs.erase(iterator);
-        }
 
         void foreachPairs(const std::function<void(PairPtr &)>& handler) {
             std::lock_guard<std::mutex> lockGuard(this->_pairsLocker);
@@ -102,6 +112,24 @@ namespace omg {
         }
 
     private:
+        void addPair(PairPtr pair){
+            std::lock_guard<std::mutex> lockGuard(this->_pairsLocker);
+            this->_pairs.insert({ pair->id(), std::move(pair) });
+        }
+
+        /*!
+         * 删除Pair和隧道的关联
+         * @param pair
+         */
+        void removePair(const PairPtr& pair){
+            std::lock_guard<std::mutex> lockGuard(this->_pairsLocker);
+            auto iterator = this->_pairs.find(pair->id());
+            if(iterator == this->_pairs.end())
+                return;
+
+            this->_pairs.erase(iterator);
+        }
+
         void initAvailablePairIDs(){
             size_t begin = INVALID_PAIR_ID+1;
 
@@ -111,6 +139,7 @@ namespace omg {
         }
 
     private:
+        std::weak_ptr<Tunnel> _tunnel;
         std::unordered_map<PairID, std::weak_ptr<Pair>> _pairs; // 映射的集合
         std::unordered_set<PairID> _availablePairIDs; // 可用的映射 ID
         std::mutex _availablePairIDsLocker;
