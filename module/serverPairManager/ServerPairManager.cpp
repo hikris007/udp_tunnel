@@ -219,10 +219,11 @@ int omg::ServerPairManager::createPair(TunnelPtr tunnel, PairID pairID, PairPtr&
     return 0;
 }
 
-void omg::ServerPairManager::foreachTunnels(const std::function<void(const TunnelPtr &)> &handler) {
+void omg::ServerPairManager::foreachTunnels(const std::function<bool(const TunnelPtr &)> &handler) {
     std::lock_guard<std::mutex> lockGuard(this->_tunnelsMutex);
 
     for(auto & _tunnel : this->_tunnels){
-        handler(_tunnel.second);
+        if(!handler(_tunnel.second))
+            break;
     }
 }

@@ -208,12 +208,21 @@
 //    return 0;
 //}
 
+void test(hidle_t*){
+
+}
+
 int main(){
     hv::EventLoopPtr eventloop = std::make_shared<hv::EventLoop>();
 
     eventloop->runInLoop([](){
         std::cout << "RNM" << std::endl;
     });
+
+    auto a = [](){
+
+    };
+
 
     eventloop->run();
 

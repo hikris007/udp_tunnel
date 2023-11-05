@@ -54,19 +54,20 @@ void omg::Client::garbageCollection() {
         }
     };
 
-    auto handler = [&pairHandler, &tunnelCount](const TunnelPtr& tunnel){
+    auto handler = [&pairHandler, &tunnelCount](const TunnelPtr& tunnel) -> bool {
         tunnelCount++;
 
         // 获取 Tunnel 上下文
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
         if(clientTunnelContext == nullptr){
             LOGGER_DEBUG("Tunnel's context is null, tunnel id: {}", tunnel->id());
-            return;
+            return true;
         }
 
         // 遍历 Pair
         LOGGER_DEBUG("Foreach pairs of tunnel, tunnel id: {}", tunnel->id());
         clientTunnelContext->foreachPairs(pairHandler);
+        return true;
     };
 
     int cleanPairCount = 0;
@@ -159,7 +160,7 @@ int omg::Client::run() {
         return -1;
     }
 
-    this->_eventLoop->runInLoop(std::bind(&ClientPairManager::adjustTunnelPool, this->_clientPairManager));
+    this->_eventLoop->runInLoop(std::bind(&ClientPairManager::prepareTunnels, this->_clientPairManager));
 
     // 开始
     this->_eventLoop->runInLoop(std::bind(&hv::UdpServer::startRecv, this->_udpServer));

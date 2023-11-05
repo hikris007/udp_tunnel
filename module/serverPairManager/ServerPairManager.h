@@ -25,7 +25,7 @@ namespace omg {
         size_t onSend(const TunnelPtr& tunnel, const Byte* payload, size_t length);
 
         // 获取所有隧道
-        void foreachTunnels(const std::function<void(const TunnelPtr&)>& handler);
+        void foreachTunnels(const std::function<bool(const TunnelPtr&)>& handler);
     private:
         int createPair(TunnelPtr tunnel, PairID pairID, PairPtr& pairPtr);
 

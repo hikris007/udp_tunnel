@@ -16,6 +16,7 @@ add_executable(udp_tunnel
         module/tunnel/LibhvWsTunnel/Server.cpp
         module/clientForwarder/ClientForwarder.cpp
         module/clientPairManager/ClientPairManager.cpp
+        module/clientPairManager/PairCounter.cpp
         module/logger/Logger.cpp
         module/pair/Pair.cpp
         module/tunnel/TunnelFactory.cpp
@@ -40,6 +41,7 @@ add_executable(
         module/listener/libhvWsListener/LibhvWsListener.cpp
         module/tunnelIDPool/TunnelIDPool.cpp
         module/serverPairManager/ServerPairManager.cpp
+        module/clientPairManager/PairCounter.cpp
         module/udpClient/UDPClientFactory.cpp
         module/payload/PayloadWrapper.cpp
         module/payload/Payload.cpp

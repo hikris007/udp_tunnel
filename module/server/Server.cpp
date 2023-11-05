@@ -105,19 +105,20 @@ void omg::Server::garbageCollection() {
         }
     };
 
-    auto handler = [&pairHandler, &tunnelCount](const TunnelPtr& tunnel){
+    auto handler = [&pairHandler, &tunnelCount](const TunnelPtr& tunnel) -> bool {
         tunnelCount++;
 
         // 获取 Tunnel 上下文
         ServerTunnelContextPtr serverTunnelContext = tunnel->getContextPtr<ServerTunnelContext>();
         if(serverTunnelContext == nullptr){
             LOGGER_DEBUG("Tunnel's context is null, tunnel id: {}", tunnel->id());
-            return;
+            return true;
         }
 
         // 遍历 Pair
         LOGGER_DEBUG("Foreach pairs of tunnel, tunnel id: {}", tunnel->id());
         serverTunnelContext->foreachPairs(pairHandler);
+        return true;
     };
 
     int cleanPairCount = 0;

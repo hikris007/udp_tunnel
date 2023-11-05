@@ -5,7 +5,9 @@
 #include "ClientPairManager.h"
 
 
-omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
+omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig)
+    : _pairCounter(clientConfig->carryingCapacity)
+{
     this->_clientConfig = clientConfig;
 
     /*!
@@ -61,7 +63,12 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
 
     // 当 Pair 关闭怎么处理
     this->onPairCloseHandler = [this](const PairPtr& pair) -> void{
+        ClientPairContextPtr clientPairContext = pair->getContextPtr<ClientPairContext>();
+        if(clientPairContext == nullptr)return;
 
+        if(clientPairContext->tunnel == nullptr)return;
+
+        this->_pairCounter.pairCounterOperate(clientPairContext->tunnel->id(), false);
     };
 
     /*!
@@ -116,21 +123,57 @@ omg::ClientPairManager::ClientPairManager(ClientConfig* clientConfig) {
     };
 }
 
-void omg::ClientPairManager::adjustTunnelPool() {
-    size_t tunnelCount = 0;
-    size_t seatCount = 0;
+void omg::ClientPairManager::prepareTunnels() {
+    bool noAvailableTunnel = this->_pairCounter.availableTunnelIDList().empty();
 
-    this->foreachTunnels([&tunnelCount, &seatCount](const TunnelPtr& tunnel){
+    if(noAvailableTunnel){
+        int errCode = this->createTunnel();
+        if(errCode != 0) {
+            LOGGER_WARN("Failed to create tunnel, error code: {}", errCode);
+            return;
+        }
+    }
+}
+
+int omg::ClientPairManager::cleanUpUselessTunnels() {
+    size_t cts = utils::Time::GetCurrentTs();
+    size_t sinceLastClean = cts - this->_lastCleanTime;
+
+    // 1s
+    if(this->_lastCleanTime > 0 && sinceLastClean < 1000)
+        return 0;
+
+    bool hasAvailableTunnel = false;
+    std::vector<TunnelPtr> uselessTunnels;
+
+    // 获取所有没有 Pair 的隧道
+    this->foreachTunnels([&hasAvailableTunnel, &uselessTunnels](const TunnelPtr& tunnel) -> bool {
         ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
-        if(clientTunnelContext == nullptr)return;
-        tunnelCount++;
-        seatCount += clientTunnelContext->vacancy();
+        if(clientTunnelContext == nullptr)
+            return true;
+
+        // 如果还没有可用隧道 && 有隧道有空位
+        if(!hasAvailableTunnel && clientTunnelContext->vacancy() > 0){
+            hasAvailableTunnel = true;
+            return true;
+        }
+
+        if(clientTunnelContext->vacancy() >= clientTunnelContext->capacity())
+            uselessTunnels.push_back(tunnel);
+
+        return true;
     });
 
-    // 如果每个 Tunnel 都是满的
-    if((seatCount / this->_clientConfig->carryingCapacity) == tunnelCount){
-
+    // 存在没用的隧道就关闭
+    if(!uselessTunnels.empty()){
+        for(const auto &tunnel : uselessTunnels){
+            tunnel->destroy();
+        }
     }
+
+    this->_lastCleanTime = utils::Time::GetCurrentTs();
+
+    return uselessTunnels.size();
 }
 
 int omg::ClientPairManager::createTunnel() {
@@ -159,59 +202,50 @@ int omg::ClientPairManager::createTunnel() {
     TunnelID tunnelID = tunnel->id();
     this->_tunnels.insert({ tunnelID, tunnel });
 
-    // 添加到计数列表 & 添加到可用隧道列表
-    this->_tunnelPairCounter.insert({tunnelID, 0});
-    this->_availableTunnelIDs.push_back(tunnelID);
+    // 添加到计数列表
+    this->_pairCounter.addTunnel(tunnelID);
 
     LOGGER_INFO("Tunnel (id: {}) has created", tunnel->id());
     return 0;
 }
 
 int omg::ClientPairManager::removeTunnel(omg::TunnelID tunnelID) {
-    // 从本地 Tunnels 移除
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
-    auto iterator = std::find(this->_availableTunnelIDs.begin(), this->_availableTunnelIDs.end(), tunnelID);
-    if(iterator != this->_availableTunnelIDs.end())
-        this->_availableTunnelIDs.erase(iterator);
+    // 从本地 Tunnels 移除
+    auto iterator = this->_tunnels.find(tunnelID);
+    if(iterator != this->_tunnels.end())
+        this->_tunnels.erase(iterator);
 
-    auto iterator2 = this->_tunnelPairCounter.find(tunnelID);
-    if(iterator2 != this->_tunnelPairCounter.end())
-        this->_tunnelPairCounter.erase(iterator2);
-
-    auto iterator3 = this->_tunnels.find(tunnelID);
-    if(iterator3 != this->_tunnels.end())
-        this->_tunnels.erase(iterator3);
-
+    // 计数列表移除
+    this->_pairCounter.removeTunnel(tunnelID);
     return 0;
 }
 
-int omg::ClientPairManager::createPair(PairPtr& outputPair) {
-    // 如果没有可用的隧道就先创建
-    if(this->_availableTunnelIDs.empty()){
-        int errCode = this->createTunnel();
-        if(errCode != 0) {
-            LOGGER_WARN("Failed to create tunnel, error code: {}", errCode);
-            return -1;
-        }
-    }
-
+int omg::ClientPairManager::getAvailableTunnel(omg::TunnelPtr &outputTunnel) {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
-    int errCode = 0;
-
     // 获取第一个空闲隧道 & 上下文
-    TunnelID tunnelID = this->_availableTunnelIDs.front();
+    TunnelID tunnelID = this->_pairCounter.getAvailableTunnelID();
     if(tunnelID == INVALID_TUNNEL_ID) return -1;
 
     auto iterator = this->_tunnels.find(tunnelID);
     if(iterator == this->_tunnels.end()) return -1;
 
     TunnelPtr tunnel = iterator->second;
-    if(tunnel == nullptr){
-        this->removeTunnel(tunnelID);
-        return -1;
-    }
+    if(tunnel == nullptr)return -1;
+
+    outputTunnel = tunnel;
+    return 0;
+}
+
+int omg::ClientPairManager::createPair(PairPtr& outputPair) {
+    int errCode = 0;
+
+    // 获取隧道
+    TunnelPtr tunnel = nullptr;
+    errCode = this->getAvailableTunnel(tunnel);
+    if(errCode != 0)return -1;
 
     // 正常来说隧道一定会有上下文 如果没有直接关了
     ClientTunnelContextPtr clientTunnelContext = tunnel->getContextPtr<ClientTunnelContext>();
@@ -221,9 +255,10 @@ int omg::ClientPairManager::createPair(PairPtr& outputPair) {
     }
 
     // 创建 Pair
-    PairPtr pair = nullptr;
-    errCode = clientTunnelContext->createPair(pair);
-    if(errCode != 0)return -1;
+    PairID pairID = clientTunnelContext->takeSeatNumber();
+    if(pairID == INVALID_PAIR_ID) return -1;
+
+    PairPtr pair = std::make_shared<Pair>(pairID);
 
     // 注册回调
     pair->sendHandler = this->pairSendHandler; // 怎么发送
@@ -234,25 +269,22 @@ int omg::ClientPairManager::createPair(PairPtr& outputPair) {
     clientPairContext->tunnel = tunnel;
     pair->setContextPtr(clientPairContext);
 
-    // 在计数器中查找 & 因为要使用这个底层传输 所以计数+1
-    auto targetCounter = this->_tunnelPairCounter.find(tunnelID);
-    targetCounter->second++;
-
-    // 如果隧道的空位满了就从可用列表中移除
-    if(targetCounter->second >= this->_clientConfig->carryingCapacity){
-        this->_availableTunnelIDs.pop_front();
-    }
+    errCode = clientTunnelContext->bindPair(pair);
+    if(errCode != 0)return -1;
 
     // 返回结果
     outputPair = std::move(pair);
 
+    this->prepareTunnels();
+
     return 0;
 }
 
-void omg::ClientPairManager::foreachTunnels(const std::function<void(const TunnelPtr&)>& handler) {
+void omg::ClientPairManager::foreachTunnels(const std::function<bool(const TunnelPtr&)>& handler) {
     std::lock_guard<std::mutex> lockGuard(this->_locker);
 
     for(auto & _tunnel : this->_tunnels){
-        handler(_tunnel.second);
+        if(!handler(_tunnel.second))
+            break;
     }
 }

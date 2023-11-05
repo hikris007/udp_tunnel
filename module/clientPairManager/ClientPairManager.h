@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <list>
 
+#include "PairCounter.h"
 #include "../logger/Logger.h"
 #include "../pair/Pair.h"
 #include "../tunnel/Tunnel.h"
@@ -28,12 +29,9 @@ namespace omg {
         explicit ClientPairManager(ClientConfig* clientConfig);
 
         /*!
-         * 调整隧道
-         * 不能超过隧道最大数量
-         * 保证一直有隧道可用
-         * 清理空闲隧道
+         * 保证 有可用隧道
          */
-        void adjustTunnelPool();
+        void prepareTunnels();
 
         /*!
          * 创建一个隧道
@@ -50,11 +48,28 @@ namespace omg {
          */
         int createPair(PairPtr& outputPair);
 
-        // 获取所有隧道
-        void foreachTunnels(const std::function<void(const TunnelPtr&)>& handler);
+        /*!
+         * 遍历所有隧道
+         * 如果处理函数返回false则停止循环
+         * @param handler
+         */
+        void foreachTunnels(const std::function<bool(const TunnelPtr&)>& handler);
+
+        /*!
+         * 清理没有 Pair 的 隧道
+         * @return 清理的数量
+         */
+        int cleanUpUselessTunnels();
+
     protected:
         int removeTunnel(TunnelID tunnelID);
 
+        /*!
+         * 线程安全
+         * @param outputTunnel 返回结果
+         * @return 0 成功
+         */
+        int getAvailableTunnel(TunnelPtr& outputTunnel);
     private:
         /*!
          * 从隧道接收到的整个数据 包含 Pair 头
@@ -84,9 +99,10 @@ namespace omg {
 
         ClientConfig* _clientConfig = nullptr; // 配置项
         std::mutex _locker; // 锁
+        size_t _lastCleanTime = 0;
+
         std::unordered_map<TunnelID, TunnelPtr> _tunnels; // 传输层的列表
-        std::unordered_map<TunnelID ,int> _tunnelPairCounter; // Key 是传输层的ID 值是空闲数量
-        std::list<TunnelID> _availableTunnelIDs; // 存放可用的（有空闲位置的）底层传输层ID
+        PairCounter _pairCounter;
     };
 }
 

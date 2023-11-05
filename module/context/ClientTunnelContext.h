@@ -52,12 +52,7 @@ namespace omg {
             this->_availablePairIDs.insert(pairID);
         }
 
-        int createPair(PairPtr& pair){
-            PairID pairID = this->takeSeatNumber();
-            if(pairID == INVALID_PAIR_ID) return -1;
-
-            pair = std::make_shared<Pair>(pairID);
-
+        int bindPair(PairPtr& pair){
             // 关联隧道
             this->addPair(pair);
 
