@@ -7,7 +7,7 @@
 omg::IdleHandler::IdleHandler() {}
 
 HANDLER_ID omg::IdleHandler::addHandler(omg::IdleCallback callback) {
-    this->_callBackManager.add(std::move(callback));
+    return this->_callBackManager.add(std::move(callback));
 }
 
 void omg::IdleHandler::removeHandler(HANDLER_ID handlerID) {
