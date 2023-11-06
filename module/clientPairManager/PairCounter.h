@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <list>
 #include <mutex>
+#include <algorithm>
 
 #include "../tunnel/Tunnel.h"
 
@@ -17,7 +18,7 @@ namespace omg {
         explicit PairCounter(int tunnelCapacity);
 
         const std::unordered_map<TunnelID ,int>& counter() const;
-        const std::list<TunnelID> availableTunnelIDList() const;
+        const std::list<TunnelID>& availableTunnelIDList() const;
 
         /*!
          * 线程安全

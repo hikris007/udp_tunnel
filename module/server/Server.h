@@ -34,7 +34,7 @@ namespace omg {
         std::mutex _runMutex;
         std::mutex _shutdownMutex;
         std::mutex _gcMutex;
-        hv::TimerID gcTimerID = INVALID_TIMER_ID;
+        hv::TimerID _gcTimerID = INVALID_TIMER_ID;
 
         AppContext* _appContext = nullptr;
         hv::EventLoopPtr _eventLoop = nullptr;

@@ -215,16 +215,23 @@ void test(hidle_t*){
 int main(){
     hv::EventLoopPtr eventloop = std::make_shared<hv::EventLoop>();
 
-    eventloop->runInLoop([](){
-        std::cout << "RNM" << std::endl;
+    eventloop->setInterval(1000, [&eventloop](hv::TimerID timerId){
+        std::cout << "HH" << std::endl;
+        eventloop->stop();
+        std::cout << "stop" << std::endl;
     });
 
-    auto a = [](){
-
-    };
-
-
     eventloop->run();
+    hidle_add()
+
+    getchar();
+    eventloop->setInterval(1000, [&eventloop](hv::TimerID timerId){
+        std::cout << "HH" << std::endl;
+        eventloop->stop();
+        std::cout << "stop" << std::endl;
+    });
+    eventloop->run();
+
 
     return 0;
 }

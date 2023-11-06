@@ -15,6 +15,7 @@
 #include "../logger/Logger.h"
 #include "../utils/time.hpp"
 #include "../utils/socket.hpp"
+#include "../IdleHandler/IdleHandler.h"
 
 namespace omg {
     class Client {
@@ -61,7 +62,7 @@ namespace omg {
         AppContext* _appContext = nullptr;
 
         hv::EventLoopPtr _eventLoop = nullptr;
-        hv::TimerID gcTimerID = INVALID_TIMER_ID;
+        hv::TimerID _gcTimerID = INVALID_TIMER_ID;
 
         std::unique_ptr<ClientForwarder> _clientForwarder = nullptr;
         std::shared_ptr<ClientPairManager> _clientPairManager = nullptr;

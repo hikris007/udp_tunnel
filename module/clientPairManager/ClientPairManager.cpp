@@ -145,6 +145,7 @@ int omg::ClientPairManager::cleanUpUselessTunnels() {
 
     bool hasAvailableTunnel = false;
     std::vector<TunnelPtr> uselessTunnels;
+    size_t beginTs = utils::Time::GetCurrentTs();
 
     // 获取所有没有 Pair 的隧道
     this->foreachTunnels([&hasAvailableTunnel, &uselessTunnels](const TunnelPtr& tunnel) -> bool {
@@ -167,12 +168,21 @@ int omg::ClientPairManager::cleanUpUselessTunnels() {
     // 存在没用的隧道就关闭
     if(!uselessTunnels.empty()){
         for(const auto &tunnel : uselessTunnels){
+            LOGGER_INFO("Tunnel (id: {}) is ready to close, because has no pairs", tunnel->id());
             tunnel->destroy();
         }
     }
 
     this->_lastCleanTime = utils::Time::GetCurrentTs();
+    size_t endTs = utils::Time::GetCurrentTs();
 
+    LOGGER_INFO(
+            "Clean up useless tunnels, spend {}ms, success to clean {}/{} tunnels, since last clean is been {} ms",
+            endTs - beginTs,
+            uselessTunnels.size(),
+            this->_tunnels.size(),
+            sinceLastClean
+    );
     return uselessTunnels.size();
 }
 

@@ -161,15 +161,19 @@ int omg::Client::run() {
     }
 
     this->_eventLoop->runInLoop(std::bind(&ClientPairManager::prepareTunnels, this->_clientPairManager));
+    omg::IdleHandler::getInstance().addHandler(std::bind(&ClientPairManager::cleanUpUselessTunnels, this->_clientPairManager));
 
     // 开始
     this->_eventLoop->runInLoop(std::bind(&hv::UdpServer::startRecv, this->_udpServer));
 
+    // 空闲时触发这个全局的空闲事件管理器
+    hidle_add(this->_eventLoop->loop(), omg::IdleHandler::libhvOnIdleTrigger, INFINITE);
+
     // 垃圾回收
-    this->gcTimerID = this->_eventLoop->setInterval(1000 * 10, [this](hv::TimerID timerID){
+    this->_gcTimerID = this->_eventLoop->setInterval(1000 * 10, [this](hv::TimerID timerID){
         this->garbageCollection();
     });
-    LOGGER_WARN("GC is running, timer id: {}", this->gcTimerID);
+    LOGGER_WARN("GC is running, timer id: {}", this->_gcTimerID);
 
     this->isRunning = true;
     LOGGER_WARN("The client is running on {}.", this->_appContext->clientConfig->listenDescription);
@@ -188,11 +192,11 @@ int omg::Client::shutdown() {
     this->_udpServer->stop();
 
     // 停止 GC 清理
-    if(this->gcTimerID != INVALID_TIMER_ID){
-        this->_eventLoop->killTimer(this->gcTimerID);
-        LOGGER_WARN("GC is stopped, timer id: {}", this->gcTimerID);
+    if(this->_gcTimerID != INVALID_TIMER_ID){
+        this->_eventLoop->killTimer(this->_gcTimerID);
+        LOGGER_WARN("GC is stopped, timer id: {}", this->_gcTimerID);
 
-        this->gcTimerID = INVALID_TIMER_ID;
+        this->_gcTimerID = INVALID_TIMER_ID;
     }
 
     // 停止接收数据

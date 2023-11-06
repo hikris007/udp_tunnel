@@ -26,11 +26,11 @@ int omg::Server::shutdown() {
     this->_listener->stop();
 
     // 停止 GC 清理
-    if(this->gcTimerID != INVALID_TIMER_ID){
-        this->_eventLoop->killTimer(this->gcTimerID);
-        LOGGER_WARN("GC is stopped, timer id: {}", this->gcTimerID);
+    if(this->_gcTimerID != INVALID_TIMER_ID){
+        this->_eventLoop->killTimer(this->_gcTimerID);
+        LOGGER_WARN("GC is stopped, timer id: {}", this->_gcTimerID);
 
-        this->gcTimerID = INVALID_TIMER_ID;
+        this->_gcTimerID = INVALID_TIMER_ID;
     }
 
     this->_eventLoop->stop();
@@ -53,11 +53,11 @@ int omg::Server::run() {
     this->_listener->start(this->_appContext->serverConfig->listenDescription);
 
     // 垃圾回收
-    this->gcTimerID = this->_eventLoop->setInterval(1000 * 10, [this](hv::TimerID timerID){
+    this->_gcTimerID = this->_eventLoop->setInterval(1000 * 10, [this](hv::TimerID timerID){
         this->garbageCollection();
     });
 
-    LOGGER_WARN("GC is running, timer id: {}", this->gcTimerID);
+    LOGGER_WARN("GC is running, timer id: {}", this->_gcTimerID);
 
     this->_isRunning = true;
     LOGGER_WARN("The server is running on {}", this->_appContext->serverConfig->listenDescription);

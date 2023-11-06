@@ -15,7 +15,7 @@ namespace omg {
         return this->_tunnelPairCounter;
     }
 
-    const std::list<TunnelID> PairCounter::availableTunnelIDList() const {
+    const std::list<TunnelID>& PairCounter::availableTunnelIDList() const {
         return this->_availableTunnelIDs;
     }
 
