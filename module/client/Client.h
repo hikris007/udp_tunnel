@@ -15,7 +15,7 @@
 #include "../logger/Logger.h"
 #include "../utils/time.hpp"
 #include "../utils/socket.hpp"
-#include "../IdleHandler/IdleHandler.h"
+#include "../idleHandler/IdleHandler.h"
 
 namespace omg {
     class Client {

@@ -176,13 +176,15 @@ int omg::ClientPairManager::cleanUpUselessTunnels() {
     this->_lastCleanTime = utils::Time::GetCurrentTs();
     size_t endTs = utils::Time::GetCurrentTs();
 
-    LOGGER_INFO(
-            "Clean up useless tunnels, spend {}ms, success to clean {}/{} tunnels, since last clean is been {} ms",
-            endTs - beginTs,
-            uselessTunnels.size(),
-            this->_tunnels.size(),
-            sinceLastClean
-    );
+    if(!uselessTunnels.empty())
+        LOGGER_INFO(
+                "Clean up useless tunnels, spend {}ms, success to clean {}/{} tunnels, since last clean is been {} ms",
+                endTs - beginTs,
+                uselessTunnels.size(),
+                this->_tunnels.size(),
+                sinceLastClean
+        );
+
     return uselessTunnels.size();
 }
 
@@ -250,6 +252,8 @@ int omg::ClientPairManager::getAvailableTunnel(omg::TunnelPtr &outputTunnel) {
 }
 
 int omg::ClientPairManager::createPair(PairPtr& outputPair) {
+    this->prepareTunnels();
+
     int errCode = 0;
 
     // 获取隧道
@@ -284,8 +288,6 @@ int omg::ClientPairManager::createPair(PairPtr& outputPair) {
 
     // 返回结果
     outputPair = std::move(pair);
-
-    this->prepareTunnels();
 
     return 0;
 }

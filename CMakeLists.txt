@@ -13,6 +13,7 @@ add_executable(udp_tunnel
         module/server/Server.cpp
         module/listener/ListenerFactory.cpp
         module/listener/libhvWsListener/LibhvWsListener.cpp
+        module/idleHandler/IdleHandler.cpp
         module/tunnel/LibhvWsTunnel/Server.cpp
         module/clientForwarder/ClientForwarder.cpp
         module/clientPairManager/ClientPairManager.cpp
