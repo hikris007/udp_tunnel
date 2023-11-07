@@ -43,6 +43,7 @@ int omg::Server::shutdown() {
 
 int omg::Server::run() {
     if(this->_isRunning) return -1;
+    int errorCode = 0;
 
     std::lock_guard<std::mutex> lockGuard(this->_runMutex);
 
@@ -50,7 +51,11 @@ int omg::Server::run() {
         this->_serverPairManager->onTunnelOpen(std::move(tunnel));
     };
 
-    this->_listener->start(this->_appContext->serverConfig->listenDescription);
+    errorCode = this->_listener->start(this->_appContext->serverConfig->listenDescription);
+    if(errorCode != 0){
+        LOGGER_ERROR("Failed to start listener");
+        return -1;
+    }
 
     // 垃圾回收
     this->_gcTimerID = this->_eventLoop->setInterval(1000 * 10, [this](hv::TimerID timerID){

@@ -38,6 +38,20 @@ int omg::ListenerFactory::createListener(
     return -1;
 }
 
+/*!
+ * 格式 : ws://ip:port
+ * 如果要使用 HTTPS: file://path/config.json
+ * config.json {
+ *  listen: '1.1.1.1',
+ *  port: 7788,
+ *  key: '',
+ *  crt: '',
+ *  https: false
+ * }
+ * @param listenDescription
+ * @param listener
+ * @return
+ */
 int omg::ListenerFactory::createLibhvWsListener(const std::string &listenDescription, omg::ListenerPtr &listener) {
     listener = std::make_shared<LibhvWsListener>(this->_eventLoop);
     return 0;

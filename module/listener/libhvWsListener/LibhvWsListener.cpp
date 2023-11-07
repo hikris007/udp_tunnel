@@ -76,14 +76,24 @@ int omg::LibhvWsListener::start(std::string listenAddress) {
 
     this->_listenAddress = listenAddress;
 
-    std::string ip;
-    int port = 0;
+    LibhvWsListenConfig config;
+    if(config.parse(listenAddress) != 0)
+        return -1;
 
-    int errorCode = utils::Socket::SplitIPAddress(this->_listenAddress, ip, port);
-    if(errorCode != 0) return -1;
+    this->_webSocketServer->setHost(config.listen.c_str());
+    this->_webSocketServer->setPort(config.port);
+    if(config.https){
+        hssl_ctx_opt_t hsslCtxOpt;
+        memset(&hsslCtxOpt, 0, sizeof(hsslCtxOpt));
 
-    this->_webSocketServer->setHost(ip.c_str());
-    this->_webSocketServer->setPort(port);
+        hsslCtxOpt.key_file = config.key.c_str();
+        hsslCtxOpt.crt_file = config.crt.c_str();
+        hsslCtxOpt.endpoint = HSSL_SERVER;
+
+        if(this->_webSocketServer->newSslCtx(&hsslCtxOpt) != 0){
+            return -1;
+        }
+    }
 
     this->_webSocketServer->run(false);
     this->_isRunning = true;
