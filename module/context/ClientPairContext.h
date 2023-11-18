@@ -6,7 +6,6 @@
 #define UDP_TUNNEL_CLIENTPAIRCONTEXT_H
 
 #include <memory>
-#include <sys/socket.h>
 #include "../tunnel/Tunnel.h"
 #include "../../header/typedef.h"
 #include "../utils/time.hpp"

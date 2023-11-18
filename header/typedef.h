@@ -34,7 +34,7 @@ namespace omg {
         DEBUG,
         INFO,
         WARN,
-        ERROR
+        ERR
     } LoggerLevel;
 
     typedef enum {
