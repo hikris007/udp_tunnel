@@ -16,7 +16,7 @@ namespace omg {
             INITIAL,
             RUNNING,
             STOPPED,
-            ERROR
+            ERR
         };
 
         virtual int start(std::string listenAddress) = 0;

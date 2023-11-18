@@ -30,7 +30,7 @@ namespace omg {
             //               -> ERROR
             //               -> CONNECTED
             //                     -> RECONNECTING
-            //                           -> ERROR
+            //                           -> ERR
             //                           -> CONNECTED -> DESTROYING -> DESTROYED
             //                     -> DESTROYING -> DESTROYED
             INITIAL,
@@ -39,7 +39,7 @@ namespace omg {
             CONNECTED,
             RECONNECTING,
 
-            ERROR,
+            ERR,
 
             DESTROYING,
             DESTROYED

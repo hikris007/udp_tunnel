@@ -113,7 +113,6 @@ void handleSystemSignal(int signal){
             return;
 
         serverPtr->shutdown();
-        exit(0);
     }
 
     if(appContext.runMode == omg::RunMode::CLIENT){
@@ -121,6 +120,5 @@ void handleSystemSignal(int signal){
             return;
 
         clientPtr->shutdown();
-        exit(0);
     }
 }

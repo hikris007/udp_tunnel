@@ -32,7 +32,7 @@ namespace omg {
         this->_webSocketClient->onclose = [this](){
             if(this->_state.current == CONNECTING){
                 // 出错了
-                this->changeState(ERROR);
+                this->changeState(ERR);
 
                 // 调用回调
                 this->_onErrorCallbacks.trigger(shared_from_this(), nullptr);
