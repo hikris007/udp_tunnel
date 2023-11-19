@@ -22,6 +22,7 @@ std::shared_ptr<omg::Client> clientPtr = nullptr;
 void handleSystemSignal(int signal);
 
 int main(int argc, char** argv) {
+    hlog_disable();
 
     appContext.serverConfig = &serverConfig;
     appContext.clientConfig = &clientConfig;
