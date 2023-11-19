@@ -20,6 +20,9 @@ size_t omg::LibhvWsServerTunnel::send(const omg::Byte *payload, omg::size_t leng
 
     std::shared_ptr<hv::WebSocketChannel> webSocketChannel = this->_webSocketChannel.lock();
 
+    if(!webSocketChannel->isWriteComplete())
+        return -1;
+
     // TODO: 头的长度
     return webSocketChannel->send(reinterpret_cast<const char*>(payload), length);
 }

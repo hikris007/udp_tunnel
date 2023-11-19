@@ -95,6 +95,9 @@ namespace omg {
         if(this->_state.current != CONNECTED)
             return -1;
 
+        if(!this->_webSocketClient->channel->isWriteComplete())
+            return -1;
+
         return this->_webSocketClient->send(reinterpret_cast<const char*>(payload), length);
     }
 
