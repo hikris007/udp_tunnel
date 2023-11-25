@@ -8,6 +8,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
 find_package(cityhash CONFIG REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 add_executable(udp_tunnel
         module/client/Client.cpp
@@ -38,4 +39,4 @@ target_link_libraries(udp_tunnel PRIVATE spdlog::spdlog)
 target_link_libraries(udp_tunnel PRIVATE CLI11::CLI11)
 target_link_libraries(udp_tunnel PRIVATE cityhash)
 target_link_libraries(udp_tunnel PRIVATE JsonCpp::JsonCpp)
-
+target_link_libraries(udp_tunnel PRIVATE OpenSSL::SSL OpenSSL::Crypto)
