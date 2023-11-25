@@ -80,9 +80,12 @@ int omg::LibhvWsListener::start(std::string listenAddress) {
     if(config.parse(listenAddress) != 0)
         return -1;
 
-    this->_webSocketServer->setHost(config.listen.c_str());
-    this->_webSocketServer->setPort(config.port);
+    int listenPort = 0,
+        sslListenPort = 0;
+
     if(config.https){
+        sslListenPort = config.port;
+
         hssl_ctx_opt_t hsslCtxOpt;
         memset(&hsslCtxOpt, 0, sizeof(hsslCtxOpt));
 
@@ -93,7 +96,12 @@ int omg::LibhvWsListener::start(std::string listenAddress) {
         if(this->_webSocketServer->newSslCtx(&hsslCtxOpt) != 0){
             return -1;
         }
+    }else{
+        listenPort = config.port;
     }
+
+    this->_webSocketServer->setHost(config.listen.c_str());
+    this->_webSocketServer->setPort(listenPort, sslListenPort);
 
     this->_webSocketServer->run(false);
     this->_isRunning = true;
