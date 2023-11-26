@@ -37,7 +37,7 @@ omg::ServerPairManager::ServerPairManager(AppContext* appContext, hv::EventLoopP
         serverPairContext->lastDataSentTime = utils::Time::GetCurrentTs();
 
         std::shared_ptr<hv::UdpClient> udpClient = serverPairContext->_udpClient;
-        return udpClient->sendto(payload, length);
+        return udpClient->sendto(payload + sizeof(PairID), length - sizeof(PairID));
     };
 
     this->pairCloseHandler = [this](const PairPtr& pair){
