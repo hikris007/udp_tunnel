@@ -51,19 +51,22 @@ namespace omg {
         auto targetCounter = this->_tunnelPairCounter.find(tunnelID);
         if(targetCounter == this->_tunnelPairCounter.end())return;
 
+        auto iterator = std::find(this->_availableTunnelIDs.begin(), this->_availableTunnelIDs.end(), tunnelID);
+
         if(isIncrease){
-            targetCounter->second++;
+            if(targetCounter->second < this->_tunnelCapacity)
+                targetCounter->second++;
 
             // 如果隧道的空位满了就从可用列表中移除
-            if(targetCounter->second >= this->_tunnelCapacity){
-                this->_availableTunnelIDs.pop_front();
+            if(targetCounter->second >= this->_tunnelCapacity && iterator != this->_availableTunnelIDs.end()){
+                this->_availableTunnelIDs.erase(iterator);
             }
         }else{
             if(targetCounter->second > 0)
                 targetCounter->second--;
 
-            // 如果隧道有空位就添加到可用列表
-            if(targetCounter->second < this->_tunnelCapacity){
+            // 如果隧道有空位就添加到可用列表(只有第一次为容量 - 1才添加)
+            if(targetCounter->second < this->_tunnelCapacity && iterator == this->_availableTunnelIDs.end()){
                 this->_availableTunnelIDs.push_back(tunnelID);
             }
         }
